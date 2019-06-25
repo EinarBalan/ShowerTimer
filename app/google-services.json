@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "610991339554",
+    "firebase_url": "https://showerlyapp.firebaseio.com",
+    "project_id": "showerlyapp",
+    "storage_bucket": "showerlyapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:610991339554:android:6c1d3ca0a7c69113",
+        "android_client_info": {
+          "package_name": "com.balanstudios.showerly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "610991339554-qscceaodrrjso7i93nnua1ndsu12ir7h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.balanstudios.showerly",
+            "certificate_hash": "0798055b307ddc5171ecc721167eec4a6a62c5f0"
+          }
+        },
+        {
+          "client_id": "610991339554-ncmknded32o429s9i3noj2jg30bkf9ii.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7K4yO050lOIBTNxpyxxfzQUHjOP6jwIE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "610991339554-ncmknded32o429s9i3noj2jg30bkf9ii.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
