@@ -53,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
     private Gson gson = new Gson();
     String userShowersJson = "";
     public static final String KEY_USER_SHOWERS = "USER_SHOWERS";
+    private String email;
+    private String displayName;
 
     //stats access keys
     public static final String KEY_GOAL = "GOAL_TIME_MILLIS";
@@ -86,6 +88,10 @@ public class MainActivity extends AppCompatActivity {
         //firebase code
         firebaseAuth = FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
+        if (currentUser != null) {
+            email = currentUser.getEmail();
+            displayName = currentUser.getDisplayName();
+        }
         documentReference = db.collection("Users").document(currentUser.getEmail()); //refers to document with user's shower list
         loadUserShowersFromFireStore();
         loadUserLifetimeStatsFromFireStore();
@@ -336,5 +342,11 @@ public class MainActivity extends AppCompatActivity {
         return avgShowerLengthMinutes;
     }
 
+    public String getEmail() {
+        return email;
+    }
 
+    public String getDisplayName() {
+        return displayName;
+    }
 }

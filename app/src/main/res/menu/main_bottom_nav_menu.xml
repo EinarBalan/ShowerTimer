@@ -12,5 +12,5 @@
     <item
         android:id="@+id/navItemProfile"
         android:icon="@drawable/ic_account_circle_black_24dp"
-        android:title="Profile" />
+        android:title="My Profile" />
 </menu>
