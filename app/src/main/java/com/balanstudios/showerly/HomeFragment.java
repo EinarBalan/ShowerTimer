@@ -5,8 +5,8 @@ import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -17,29 +17,15 @@ import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.Chronometer;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -47,11 +33,14 @@ import java.util.Map;
  */
 public class HomeFragment extends Fragment {
 
+    private MainActivity mainActivity;
+
     private Chronometer chronometer;
     private boolean isTimerRunning = false;
     private FloatingActionButton buttonToggleTimer;
     private Button buttonSave;
     private Button buttonReset;
+    private ImageButton imageButtonRefreshStats;
     private ProgressBar progressBarGoal;
     private ProgressBar progressBarOverflow;
 
@@ -67,6 +56,8 @@ public class HomeFragment extends Fragment {
     private Drawable toggleTimer;
     private DecimalFormat formatVolume = new DecimalFormat("0.0");
     private DecimalFormat formatCost = new DecimalFormat("0.00");
+    private DecimalFormat formatTime = new DecimalFormat("0");
+
 
     private long elapsedTimeMillis = 0;
     private long goalTimeMillis = 600000;
@@ -78,14 +69,13 @@ public class HomeFragment extends Fragment {
     private String instanceDate = DateFormat.getInstance().format(calendar.getTime()).substring(0, DateFormat.getInstance().format(calendar.getTime()).indexOf(" "));
     private String instanceTime = "";
 
-    //firebase and user data storage. NOT INCLUDED IN MAIN ACTIVITY BECAUSE THERE IS DIFFERENT BEHAVIOUR DURING SAVE AND LOAD TO FIREBASE DEPENDING ON FRAGMENT. DON'T @ ME. I HATE REPEATING CODE TOO BUT IT'S NECESSARY
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUser currentUser;
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private DocumentReference documentReference;
-    private Gson gson = new Gson();
-    String userShowersJson = "";
-    public static final String KEY_USER_SHOWERS = "USER_SHOWERS";
+    //stats access keys
+    public static final String KEY_GOAL = "GOAL_TIME_MILLIS";
+    public static final String KEY_TOTAL_TIME = "TOTAL_TIME";
+    public static final String KEY_TOTAL_COST = "TOTAL_COST";
+    public static final String KEY_TOTAL_VOLUME = "TOTAL_VOLUME";
+    public static final String KEY_AVG_SHOWER_LEN = "AVG_SHOWER_LEN";
+
 
     public HomeFragment() {
         // Required empty public constructor
@@ -98,10 +88,13 @@ public class HomeFragment extends Fragment {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_home, container, false);
 
+        mainActivity = ((MainActivity) getActivity());
+
         chronometer = v.findViewById(R.id.textTimer); chronometer.setOnChronometerTickListener(onChronometerTickListener);
         buttonToggleTimer = v.findViewById(R.id.floatingActionButtonToggleTimer); buttonToggleTimer.setOnClickListener(onClickListener);
         buttonSave = v.findViewById(R.id.buttonSave); buttonSave.setOnClickListener(onClickListener);
         buttonReset = v.findViewById(R.id.buttonReset); buttonReset.setOnClickListener(onClickListener);
+        imageButtonRefreshStats = v.findViewById(R.id.imageButtonRefreshStats); imageButtonRefreshStats.setOnClickListener(onClickListener);
         progressBarGoal = v.findViewById(R.id.progressBarGoal);
         progressBarOverflow = v.findViewById(R.id.progressBarOverflow);
 
@@ -114,13 +107,17 @@ public class HomeFragment extends Fragment {
         textViewTotalVolume = v.findViewById(R.id.textViewTotalVolume);
         textViewTotalCost = v.findViewById(R.id.textViewTotalCost);
 
-        firebaseAuth = FirebaseAuth.getInstance();
-        currentUser = firebaseAuth.getCurrentUser();
-        documentReference = db.collection("Users").document(currentUser.getEmail()); //refers to document with user's shower list
-        loadUserShowersFromFireStore();
+        new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
+            @Override
+            public void run() {
+                updateLifetimeStatsTextViews();
+            }
+        }, 3000);
 
         return v;
     }
+
+
 
     View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
@@ -134,6 +131,11 @@ public class HomeFragment extends Fragment {
                     break;
                 case R.id.buttonSave:
                     saveShower();
+                    break;
+                case R.id.imageButtonRefreshStats:
+                    mainActivity.loadUserLifetimeStatsFromFireStore();
+                    updateLifetimeStatsTextViews();
+                    Toast.makeText(getActivity(), "Refreshed lifetime stats.", Toast.LENGTH_SHORT).show();
                     break;
             }
         }
@@ -215,10 +217,10 @@ public class HomeFragment extends Fragment {
             }
 
             if (elapsedTimeMillis <= 100){ //only hide navbar if timer just started, 100 because elapsedTime will never be zero
-                if (((MainActivity) getActivity()).getMainNavBar().getVisibility() == View.VISIBLE) {
-                    ((MainActivity) getActivity()).getMainNavBar().startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.slide_down));
+                if (mainActivity.getMainNavBar().getVisibility() == View.VISIBLE) {
+                    mainActivity.getMainNavBar().startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.slide_down));
                 }
-                ((MainActivity) getActivity()).getMainNavBar().setVisibility(View.GONE);
+                mainActivity.getMainNavBar().setVisibility(View.GONE);
                 instanceTime = sdf.format(calendar.getTime());
             }
         }
@@ -235,16 +237,41 @@ public class HomeFragment extends Fragment {
         //reset stats here
         progressBarOverflow.setProgress(0);
 
-        ((MainActivity) getActivity()).getMainNavBar().setVisibility(View.VISIBLE);
+        mainActivity.getMainNavBar().setVisibility(View.VISIBLE);
     }
 
     public void saveShower(){
         if (elapsedTimeMillis > 15000){
 
             //add shower to user's account (getUserShower used so that showers are stored locally rather than only on database ---> fewer required accesses from client)
-            ((MainActivity) getActivity()).getUserShowers().add(new Shower(elapsedTimeMillis, instanceDate, instanceTime, elapsedTimeMillis <= goalTimeMillis));
-            saveToFireStore(((MainActivity) getActivity()).getUserShowers());
+            mainActivity.getUserShowers().add(new Shower(elapsedTimeMillis, instanceDate, instanceTime, elapsedTimeMillis <= goalTimeMillis));
+
+            //save shower
+            if (mainActivity.saveToFireStore(mainActivity.getUserShowers())) { //checks network connection
+
+                //update lifetime stats (before reset timer you moron)
+                mainActivity.addTotalTimeMinutes(elapsedTimeMinutes);
+                mainActivity.addTotalCost(instanceCost);
+                mainActivity.addTotalVolume(instanceVolume);
+
+
+                resetTimer(buttonSave);
+                Toast.makeText(getActivity(), "Saved to my showers!", Toast.LENGTH_SHORT).show();
+
+                mainActivity.saveToFireStore(KEY_TOTAL_TIME, mainActivity.getTotalTimeMinutes(), KEY_TOTAL_COST, mainActivity.getTotalCost(), KEY_TOTAL_VOLUME, mainActivity.getTotalVolume(), KEY_AVG_SHOWER_LEN, mainActivity.calculateAvgShowerLengthMinutes());
+
+                new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
+                    @Override
+                    public void run() {
+                        updateLifetimeStatsTextViews();
+                    }
+                }, 3000);
+            }
+            else {
+                Toast.makeText(getActivity(), "Shower not saved. Network connection required.", Toast.LENGTH_SHORT).show();
+            }
         }
+
         else if (isTimerRunning){
             Toast.makeText(getActivity(), "Pause timer before saving.", Toast.LENGTH_SHORT).show();
         }
@@ -252,56 +279,10 @@ public class HomeFragment extends Fragment {
             Toast.makeText(getActivity(), "Shower is too short to be saved!", Toast.LENGTH_SHORT).show();
     }
 
-    private void saveToFireStore(ArrayList<Shower> userShowers) {
-
-        userShowersJson = gson.toJson(userShowers); //convert user showers list to storable format
-
-        Map<String, Object> note = new HashMap<>();
-        note.put(KEY_USER_SHOWERS, userShowersJson);
-
-        documentReference.set(note)
-            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void aVoid) { 
-                    resetTimer(buttonSave);
-                    Toast.makeText(getActivity(), "Saved to my showers!", Toast.LENGTH_SHORT).show();
-                }
-            })
-        .addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(getActivity(), "Error: shower not saved!", Toast.LENGTH_SHORT).show();
-            }
-        });
+    private void updateLifetimeStatsTextViews() {
+        textViewTotalCost.setText("$" + formatCost.format(mainActivity.getTotalCost()));
+        textViewTotalVolume.setText(formatVolume.format(mainActivity.getTotalVolume()) + " gallons");
+        textViewTimeSpent.setText((int)(mainActivity.getTotalTimeMinutes() / 60) + " hours " + formatTime.format(mainActivity.getTotalTimeMinutes() % 60)  + " minutes");
+        textViewAvgShowerLength.setText((int)(mainActivity.getAvgShowerLengthMinutes()) + " minutes " + formatTime.format(mainActivity.getAvgShowerLengthMinutes() % 1 * 60) + " seconds");
     }
-
-    private void loadUserShowersFromFireStore(){
-        documentReference.get()
-                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                    @Override
-                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        if (documentSnapshot.exists()){
-                            userShowersJson = documentSnapshot.getString(KEY_USER_SHOWERS);
-                            Type typeList = new TypeToken<ArrayList<Shower>>() {
-                            }.getType();
-
-                            ((MainActivity) getActivity()).setUserShowers((ArrayList<Shower>)gson.fromJson(userShowersJson, typeList));
-
-                        }
-                        else {
-                            Toast.makeText(getActivity(), "Document does not exist", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(getActivity(), "Something went wrong when loading your showers!", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-
-
-
 }
