@@ -26,6 +26,7 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 
 
 /**
@@ -52,6 +53,7 @@ public class HomeFragment extends Fragment {
     private TextView textViewAvgShowerLength;
     private TextView textViewTotalVolume;
     private TextView textViewTotalCost;
+    private TextView textViewDisplayName;
 
     private Drawable toggleTimer;
     private DecimalFormat formatVolume = new DecimalFormat("0.0");
@@ -60,7 +62,6 @@ public class HomeFragment extends Fragment {
 
 
     private long elapsedTimeMillis = 0;
-    private long goalTimeMillis = 600000;
     private double elapsedTimeMinutes = 0;
     private double instanceVolume = 0;
     private double instanceCost = 0;
@@ -106,6 +107,10 @@ public class HomeFragment extends Fragment {
         textViewAvgShowerLength = v.findViewById(R.id.textViewAvgShowerLength);
         textViewTotalVolume = v.findViewById(R.id.textViewTotalVolume);
         textViewTotalCost = v.findViewById(R.id.textViewTotalCost);
+        textViewDisplayName = v.findViewById(R.id.textViewDisplayName);
+
+        mainActivity.loadCache();
+        updateCachedText();
 
         new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
             @Override
@@ -149,7 +154,7 @@ public class HomeFragment extends Fragment {
             elapsedTimeMinutes = (double)elapsedTimeMillis / 1000 / 60;
 
             //update progress bars
-            int progress = (int)((double) elapsedTimeMillis /(double)goalTimeMillis * 100);
+            int progress = (int)((double) elapsedTimeMillis /(double)mainActivity.getGoalTimeMillis() * 100);
             if (progress <= 100){ // if goal is currently being met
                 progressBarGoal.setProgress(progress);
             }
@@ -244,7 +249,7 @@ public class HomeFragment extends Fragment {
         if (elapsedTimeMillis > 15000){
 
             //add shower to user's account (getUserShower used so that showers are stored locally rather than only on database ---> fewer required accesses from client)
-            mainActivity.getUserShowers().add(new Shower(elapsedTimeMillis, instanceDate, instanceTime, elapsedTimeMillis <= goalTimeMillis));
+            mainActivity.getUserShowers().add(new Shower(elapsedTimeMillis, instanceDate, instanceTime, elapsedTimeMillis <= mainActivity.getGoalTimeMillis()));
 
             //save shower
             if (mainActivity.saveToFireStore(mainActivity.getUserShowers())) { //checks network connection
@@ -259,11 +264,13 @@ public class HomeFragment extends Fragment {
                 Toast.makeText(getActivity(), "Saved to my showers!", Toast.LENGTH_SHORT).show();
 
                 mainActivity.saveToFireStore(KEY_TOTAL_TIME, mainActivity.getTotalTimeMinutes(), KEY_TOTAL_COST, mainActivity.getTotalCost(), KEY_TOTAL_VOLUME, mainActivity.getTotalVolume(), KEY_AVG_SHOWER_LEN, mainActivity.calculateAvgShowerLengthMinutes());
-
+                mainActivity.loadCache();
+                updateCachedText();
                 new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
                     @Override
                     public void run() {
                         updateLifetimeStatsTextViews();
+                        mainActivity.saveCache();
                     }
                 }, 3000);
             }
@@ -280,9 +287,27 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateLifetimeStatsTextViews() {
+
+        double sec = (double)mainActivity.getGoalTimeMillis() / 1000;
+        int min = (int)sec / 60;
+        int sec_int = (int)sec % 60;
+        textViewGoal.setText(String.format(Locale.getDefault(), "%d:%02d", min, sec_int));
+
         textViewTotalCost.setText("$" + formatCost.format(mainActivity.getTotalCost()));
         textViewTotalVolume.setText(formatVolume.format(mainActivity.getTotalVolume()) + " gallons");
         textViewTimeSpent.setText((int)(mainActivity.getTotalTimeMinutes() / 60) + " hours " + formatTime.format(mainActivity.getTotalTimeMinutes() % 60)  + " minutes");
         textViewAvgShowerLength.setText((int)(mainActivity.getAvgShowerLengthMinutes()) + " minutes " + formatTime.format(mainActivity.getAvgShowerLengthMinutes() % 1 * 60) + " seconds");
+    }
+
+    private void updateCachedText(){
+        double sec = (double)mainActivity.getGoalTimeMillisCache() / 1000;
+        int min = (int)sec / 60;
+        int sec_int = (int)sec % 60;
+        textViewGoal.setText(String.format(Locale.getDefault(), "%d:%02d", min, sec_int));
+
+        textViewTotalCost.setText("$" + formatCost.format(mainActivity.getTotalCostCache()));
+        textViewTotalVolume.setText(formatVolume.format(mainActivity.getTotalVolumeCache()) + " gallons");
+        textViewTimeSpent.setText((int)(mainActivity.getTotalTimeMinutesCache() / 60) + " hours " + formatTime.format(mainActivity.getTotalTimeMinutesCache() % 60)  + " minutes");
+        textViewAvgShowerLength.setText((int)(mainActivity.getAvgShowerLengthMinutesCache()) + " minutes " + formatTime.format(mainActivity.getAvgShowerLengthMinutesCache() % 1 * 60) + " seconds");
     }
 }

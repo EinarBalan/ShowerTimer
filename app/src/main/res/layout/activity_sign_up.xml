@@ -102,7 +102,9 @@
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@+id/textView4"
         app:layout_constraintStart_toEndOf="@+id/textView4"
-        app:layout_constraintTop_toTopOf="@+id/textView4" />
+        app:layout_constraintTop_toTopOf="@+id/textView4"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        />
 
     <Button
         android:id="@+id/buttonCreateAccount"

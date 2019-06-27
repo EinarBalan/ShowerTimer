@@ -123,7 +123,7 @@
                             android:id="@+id/buttonEditProfile"
                             android:layout_width="180dp"
                             android:layout_height="40dp"
-                            android:layout_marginTop="12dp"
+                            android:layout_marginTop="16dp"
                             android:layout_marginBottom="8dp"
                             android:background="@drawable/ripple_solid_primary"
                             android:text="Edit Profile"
@@ -154,7 +154,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="750dp"
                 android:layout_marginTop="0dp"
-                app:cardBackgroundColor="@color/profileCardColor"
+                app:cardBackgroundColor="@color/lightGrey"
                 app:cardCornerRadius="0dp">
 
                 <android.support.design.widget.CoordinatorLayout

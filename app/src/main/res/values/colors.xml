@@ -11,4 +11,7 @@
     <color name="headerTextColor">#403c3b</color>
     <color name="textColor">#808080</color>
     <color name="lightRed">#f76767</color>
+    <color name="hintTextColor">#FF7C7471</color>
+    <color name="dividerColor">#ebebeb</color>
+    <color name="linkColor">#0000EE</color>
 </resources>
