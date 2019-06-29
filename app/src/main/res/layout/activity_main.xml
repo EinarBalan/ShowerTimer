@@ -17,9 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_above="@id/mainNavBar"
-            >
-
-        </FrameLayout>
+            />
 
         <android.support.design.widget.BottomNavigationView
             android:id="@+id/mainNavBar"
@@ -27,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_alignParentBottom="true"
-            android:background="@android:color/white"
+            android:background="?attr/colorCardBackground"
             app:itemIconTint="@color/nav_color"
             app:itemTextColor="@color/nav_color"
             app:menu="@menu/main_bottom_nav_menu" />

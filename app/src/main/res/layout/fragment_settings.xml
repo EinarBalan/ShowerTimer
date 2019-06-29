@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".EditProfileFragment">
+    tools:context=".SettingsFragment">
 
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
@@ -40,23 +40,6 @@
                     android:layout_height="match_parent">
 
                     <ImageButton
-                        android:id="@+id/buttonSettings"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginEnd="12dp"
-                        android:layout_marginBottom="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:scaleX="1"
-                        android:scaleY="1"
-                        android:src="@drawable/ic_setting_unfilled_thick"
-                        android:tint="?attr/colorPrimaryDark"
-                        android:visibility="visible"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <ImageButton
                         android:id="@+id/buttonBack"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -79,7 +62,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif"
-                        android:text="Edit Profile"
+                        android:text="Settings"
                         android:textAlignment="center"
                         android:textAllCaps="false"
                         android:textColor="?attr/colorDarkText"
@@ -99,7 +82,125 @@
                 android:layout_marginLeft="16dp"
                 android:layout_marginTop="32dp"
                 android:layout_marginBottom="2dp"
-                android:text="Info"
+                android:text="Preferences"
+                android:textAllCaps="true"
+                android:textColor="?attr/colorLightText"
+                android:textSize="12sp" />
+
+            <android.support.v7.widget.CardView
+                android:id="@+id/cardFunctionality"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp"
+                app:cardBackgroundColor="?attr/colorCardBackground"
+                app:cardElevation="1dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/toolbar">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:paddingLeft="16dp"
+                        android:paddingTop="16dp"
+                        android:paddingRight="16dp"
+                        android:paddingBottom="16dp">
+
+                        <TextView
+                            android:id="@+id/textViewFlowRate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Flow Rate"
+                            android:textColor="?attr/colorDarkText"
+                            android:textSize="16sp" />
+
+                        <EditText
+                            android:id="@+id/editTextFlowRate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:ems="10"
+                            android:hint=" 2.1 gallons per minute"
+                            android:inputType="numberDecimal"
+                            android:maxLength="7"
+                            android:selectAllOnFocus="true"
+                            android:textAlignment="viewEnd"
+                            android:textColor="?attr/colorLightText"
+                            android:textColorHint="?attr/colorLightText"
+                            android:textSize="16sp"
+                            tools:layout_editor_absoluteX="235dp" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:theme="@style/Divider"></View>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:paddingLeft="16dp"
+                        android:paddingTop="16dp"
+                        android:paddingRight="16dp"
+                        android:paddingBottom="16dp">
+
+                        <TextView
+                            android:id="@+id/textViewCost"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Cost"
+                            android:textColor="?attr/colorDarkText"
+                            android:textSize="16sp" />
+
+                        <EditText
+                            android:id="@+id/editTextCost"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:ems="10"
+                            android:hint=".15 cents per gallon"
+                            android:inputType="numberDecimal"
+                            android:maxLength="7"
+                            android:selectAllOnFocus="true"
+                            android:textAlignment="viewEnd"
+                            android:textColor="?attr/colorLightText"
+                            android:textColorHint="?attr/colorLightText"
+                            android:textSize="16sp"
+                            tools:layout_editor_absoluteX="235dp" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:theme="@style/Divider"></View>
+
+
+                </LinearLayout>
+
+            </android.support.v7.widget.CardView>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="2dp"
+                android:text="Audio"
                 android:textAllCaps="true"
                 android:textColor="?attr/colorLightText"
                 android:textSize="12sp" />
@@ -124,37 +225,113 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
+                        android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:paddingLeft="16dp"
                         android:paddingTop="16dp"
                         android:paddingRight="16dp"
-                        android:paddingBottom="16dp">
+                        android:paddingBottom="16dp"
+                        android:visibility="gone">
 
                         <TextView
                             android:id="@+id/textView"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Display Name"
+                            android:text="Alert Volume"
+                            android:textColor="?attr/colorDarkText"
+                            android:textSize="16sp" />
+
+                        <SeekBar
+                            android:id="@+id/seekBarVolume"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="5"
+                            android:backgroundTint="?attr/colorPrimaryDark"
+                            android:max="100"
+                            android:progress="10"
+                            android:progressTint="?attr/colorPrimaryDark" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:theme="@style/Divider"></View>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingLeft="16dp"
+                        android:paddingTop="13dp"
+                        android:paddingRight="16dp"
+                        android:paddingBottom="13dp">
+
+                        <TextView
+                            android:id="@+id/textViewDisplay"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Interval Alerts"
+                            android:textColor="?attr/colorDarkText"
+                            android:textSize="16sp" />
+
+                        <Switch
+                            android:id="@+id/switchIntervalAlerts"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:checked="true" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:id="@+id/dividerAlert"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:theme="@style/Divider"></View>
+
+                    <LinearLayout
+                        android:id="@+id/linearLayoutAlertFrequency"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingLeft="16dp"
+                        android:paddingTop="16dp"
+                        android:paddingRight="16dp"
+                        android:paddingBottom="16dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/textViewInterval"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Alert Frequency"
                             android:textColor="?attr/colorDarkText"
                             android:textSize="16sp" />
 
                         <EditText
-                            android:id="@+id/editTextDisplayName"
+                            android:id="@+id/editTextAlertFrequency"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:background="@null"
                             android:ems="10"
-                            android:hint="Add name"
-                            android:inputType="text"
-                            android:maxLength="24"
+                            android:hint="5m 00s"
+                            android:inputType="number"
+                            android:maxLength="7"
                             android:selectAllOnFocus="true"
                             android:textAlignment="viewEnd"
                             android:textColor="?attr/colorLightText"
                             android:textColorHint="?attr/colorLightText"
                             android:textSize="16sp"
                             tools:layout_editor_absoluteX="235dp" />
+
+
                     </LinearLayout>
 
                     <View
@@ -170,79 +347,32 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
+                            android:gravity="center_vertical"
                             android:orientation="horizontal"
                             android:paddingLeft="16dp"
-                            android:paddingTop="16dp"
+                            android:paddingTop="13dp"
                             android:paddingRight="16dp"
-                            android:paddingBottom="16dp">
+                            android:paddingBottom="13dp">
 
                             <TextView
                                 android:id="@+id/textViewVibrations"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Goal Time"
+                                android:text="Vibrations"
                                 android:textColor="?attr/colorDarkText"
                                 android:textSize="16sp" />
 
-                            <EditText
-                                android:id="@+id/editTextGoalTime"
+                            <Switch
+                                android:id="@+id/switchVibrations"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:background="@null"
-                                android:ems="10"
-                                android:hint="0m 00s"
-                                android:inputType="number"
-                                android:maxLength="7"
-                                android:selectAllOnFocus="true"
-                                android:text="10m 00s"
-                                android:textAlignment="viewEnd"
-                                android:textColor="?attr/colorLightText"
-                                android:textColorHint="?attr/colorLightText"
-                                android:textSize="16sp"
-                                tools:layout_editor_absoluteX="235dp" />
+                                android:layout_weight="1" />
+
                         </LinearLayout>
 
                     </LinearLayout>
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:theme="@style/Divider"></View>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="horizontal"
-                        android:paddingLeft="16dp"
-                        android:paddingTop="16dp"
-                        android:paddingRight="16dp"
-                        android:paddingBottom="16dp">
-
-                        <TextView
-                            android:id="@+id/textViewDisplay"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="City"
-                            android:textColor="?attr/colorDarkText"
-                            android:textSize="16sp" />
-
-                        <TextView
-                            android:id="@+id/textViewAddCity"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight=".1"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:text="Add City"
-                            android:textAlignment="viewEnd"
-                            android:textAllCaps="false"
-                            android:textColor="?attr/colorPrimaryDark"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                    </LinearLayout>
 
                 </LinearLayout>
 
@@ -255,7 +385,7 @@
                 android:layout_marginLeft="16dp"
                 android:layout_marginTop="32dp"
                 android:layout_marginBottom="2dp"
-                android:text="Password"
+                android:text="Visual"
                 android:textAllCaps="true"
                 android:textColor="?attr/colorLightText"
                 android:textSize="12sp" />
@@ -282,31 +412,24 @@
                         android:layout_height="match_parent"
                         android:orientation="horizontal"
                         android:paddingLeft="16dp"
-                        android:paddingTop="16dp"
+                        android:paddingTop="13dp"
                         android:paddingRight="16dp"
-                        android:paddingBottom="16dp">
+                        android:paddingBottom="13dp">
 
                         <TextView
                             android:id="@+id/textViewDarkMode"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Change Password"
+                            android:text="Dark Mode"
                             android:textColor="?attr/colorDarkText"
                             android:textSize="16sp" />
 
-                        <TextView
-                            android:id="@+id/textViewSendEmail"
+                        <Switch
+                            android:id="@+id/switchDarkMode"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight=".1"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:text="Send Email"
-                            android:textAlignment="viewEnd"
-                            android:textAllCaps="false"
-                            android:textColor="?attr/colorPrimaryDark"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
+                            android:layout_weight="1" />
 
                     </LinearLayout>
 
@@ -360,18 +483,6 @@
                 android:textColor="?attr/colorCardBackground"
                 android:textStyle="bold" />
 
-            <Button
-                android:id="@+id/buttonLogOut"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="8dp"
-                android:layout_weight="1"
-                android:background="@drawable/ripple_unfilled_primary"
-                android:stateListAnimator="@null"
-                android:text="Log Out"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorPrimaryDark"
-                android:textStyle="bold" />
         </LinearLayout>
 
     </android.support.constraint.ConstraintLayout>

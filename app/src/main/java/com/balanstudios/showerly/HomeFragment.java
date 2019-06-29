@@ -62,6 +62,7 @@ public class HomeFragment extends Fragment {
 
 
     private long elapsedTimeMillis = 0;
+    private long timeUntilAlertSeconds = 0;
     private double elapsedTimeMinutes = 0;
     private double instanceVolume = 0;
     private double instanceCost = 0;
@@ -102,7 +103,7 @@ public class HomeFragment extends Fragment {
         textViewDate = v.findViewById(R.id.textViewDate); textViewDate.setText(instanceDate);
         textViewQuickVolume = v.findViewById(R.id.textViewQuickVolume);
         textViewQuickCost = v.findViewById(R.id.textViewQuickCost);
-        textViewGoal = v.findViewById(R.id.textViewGoal);
+        textViewGoal = v.findViewById(R.id.textViewVibrations);
         textViewTimeSpent = v.findViewById(R.id.textViewTimeSpent);
         textViewAvgShowerLength = v.findViewById(R.id.textViewAvgShowerLength);
         textViewTotalVolume = v.findViewById(R.id.textViewTotalVolume);
@@ -153,6 +154,14 @@ public class HomeFragment extends Fragment {
             elapsedTimeMillis = SystemClock.elapsedRealtime() - chronometer.getBase();
             elapsedTimeMinutes = (double)elapsedTimeMillis / 1000 / 60;
 
+            if (mainActivity.isIntervalAlertsOn()) { //interval alert system
+                if ((elapsedTimeMillis / 1000) % mainActivity.getAlertFrequencySeconds() == 0 && elapsedTimeMillis > 1000) {
+                    mainActivity.playAlertSound(MainActivity.interval_end_ID);
+                    mainActivity.vibrate(2);
+//                    Toast.makeText(getActivity(), "Alert", Toast.LENGTH_SHORT).show();
+                }
+            }
+
             //update progress bars
             int progress = (int)((double) elapsedTimeMillis /(double)mainActivity.getGoalTimeMillis() * 100);
             if (progress <= 100){ // if goal is currently being met
@@ -171,6 +180,8 @@ public class HomeFragment extends Fragment {
 
 
             if (elapsedTimeMillis > 3600000){ //shower can't be longer than one hour
+                mainActivity.playAlertSound(MainActivity.timer_end_ID);
+                mainActivity.vibrate(3);
                 toggleTimer(buttonToggleTimer);
                 saveShower();
                 Toast.makeText(getActivity(), "Shower too long! Get out!", Toast.LENGTH_LONG).show();
@@ -235,6 +246,7 @@ public class HomeFragment extends Fragment {
     public void resetTimer(View v){
         // insert 'are you sure?' dialog here
         elapsedTimeMillis = 0;
+        timeUntilAlertSeconds = 0;
         isTimerRunning = false;
         chronometer.setBase(SystemClock.elapsedRealtime());
         chronometer.stop();

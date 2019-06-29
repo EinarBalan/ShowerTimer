@@ -1,9 +1,16 @@
 package com.balanstudios.showerly;
 
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -18,6 +25,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Locale;
+
+import io.opencensus.trace.propagation.TextFormat;
 
 
 /**
@@ -41,7 +50,9 @@ public class EditProfileFragment extends Fragment {
     private ProgressBar progressBar;
 
     //firebase
-    public static final String KEY_GOAL_TIME = "GOAL_TIME_MILLIS";
+
+    //location
+    private int COURSE_LOCATION_PERMISSION_CODE = 1;
 
     public EditProfileFragment() {
         // Required empty public constructor
@@ -55,6 +66,7 @@ public class EditProfileFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_edit_profile, container, false);
 
         mainActivity = (MainActivity) getActivity();
+//        TimeFormat timeFormat = new TimeFormat(editTextGoalTime, getActivity()); //initialize TimeFormat
 
         textViewAddCity = v.findViewById(R.id.textViewAddCity); textViewAddCity.setOnClickListener(onClickListener);
         textViewSendEmail = v.findViewById(R.id.textViewSendEmail); textViewSendEmail.setOnClickListener(onClickListener);
@@ -67,7 +79,7 @@ public class EditProfileFragment extends Fragment {
         buttonLogOut = v.findViewById(R.id.buttonLogOut); buttonLogOut.setOnClickListener(onClickListener);
 
         editTextDisplayName = v.findViewById(R.id.editTextDisplayName);
-        editTextGoalTime= v.findViewById(R.id.editTextGoalTime); editTextGoalTime.addTextChangedListener(new TimeFormat(editTextGoalTime).getTimeFormatter());
+        editTextGoalTime= v.findViewById(R.id.editTextGoalTime); editTextGoalTime.addTextChangedListener(new TimeFormat(editTextGoalTime, getActivity()).getTimeFormatter());
 
         //set edit text to saved values
         if (mainActivity.getDisplayName() != null){
@@ -77,6 +89,10 @@ public class EditProfileFragment extends Fragment {
         int min = (int)sec / 60;
         int sec_int = (int)sec % 60;
         editTextGoalTime.setText(String.format(Locale.getDefault(), "%dm %02ds", min, sec_int));
+
+        if (mainActivity.getCity() != null && mainActivity.getCity().length() > 0){
+            textViewAddCity.setText(mainActivity.getCity());
+        }
 
         return v;
     }
@@ -89,7 +105,7 @@ public class EditProfileFragment extends Fragment {
                     mainActivity.onBackPressed();
                     break;
                 case R.id.buttonSettings:
-                    //open settings fragment
+                    mainActivity.setFragmentReturnableSlide(new SettingsFragment());
                     break;
                 case R.id.buttonApplyChanges:
                     applyChanges();
@@ -99,7 +115,14 @@ public class EditProfileFragment extends Fragment {
                     mainActivity.logOut();
                     break;
                 case R.id.textViewAddCity:
-                    //find geolocation and convert to city
+                    if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+                        textViewAddCity.setText(mainActivity.findCity());
+
+                    }
+                    else {
+                        requestLocationPermission();
+                        textViewAddCity.setText(mainActivity.findCity());
+                    }
                     break;
                 case R.id.textViewSendEmail:
                     //are you sure?
@@ -111,11 +134,54 @@ public class EditProfileFragment extends Fragment {
         }
     };
 
-    public void applyChanges(){
-        if (textToValue(editTextGoalTime) > 0) {
-            long instanceGoalTimeMillis = textToValue(editTextGoalTime) * 1000;
 
-            if (mainActivity.saveToFireStore(KEY_GOAL_TIME, instanceGoalTimeMillis)) {
+
+    private void requestLocationPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION)) {
+
+            new AlertDialog.Builder(getActivity())
+                    .setTitle("Permission Needed")
+                    .setMessage("Granting location permission gives you access to the leaderboards, which are ranked by city.")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, COURSE_LOCATION_PERMISSION_CODE);
+
+                        }
+                    })
+                    .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    })
+            .create().show();
+        }
+        else {
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, COURSE_LOCATION_PERMISSION_CODE);
+        }
+
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == COURSE_LOCATION_PERMISSION_CODE){
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(getActivity(), "Permission was granted.", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                Toast.makeText(getActivity(), "Permission was not granted.", Toast.LENGTH_SHORT).show();
+
+            }
+        }
+    }
+
+    private void applyChanges(){
+        if (TimeFormat.textToValue(editTextGoalTime) > 0) {
+            long instanceGoalTimeMillis = TimeFormat.textToValue(editTextGoalTime) * 1000;
+
+            if (mainActivity.saveToFireStore(MainActivity.KEY_GOAL_TIME, instanceGoalTimeMillis)) {
                 Toast.makeText(getActivity(), "Changes saved!", Toast.LENGTH_SHORT).show();
             }
             else {
@@ -126,154 +192,20 @@ public class EditProfileFragment extends Fragment {
             Toast.makeText(getActivity(), "Goal time must be greater than 0 seconds.", Toast.LENGTH_SHORT).show();
         }
 
-        if (mainActivity.getDisplayName() != editTextDisplayName.getText().toString()) { //only apply if a different name is entered
+        if (textViewAddCity.getText().toString() != "Add City" && textViewAddCity.getText().toString().length() > 0) {
+            mainActivity.saveToFireStore(MainActivity.KEY_CITY, textViewAddCity.getText().toString());
+        }
+
+
+        if (mainActivity.getDisplayName() != editTextDisplayName.getText().toString() && editTextDisplayName.getText().toString().length() > 0) { //only apply if a different name is entered
             mainActivity.setUserDisplayName(editTextDisplayName.getText().toString());
             mainActivity.loadUserDisplayName();
         }
 
-        mainActivity.loadGoalTime();
+        mainActivity.loadUserPreferencesFirebase();
 
     }
 
 
-    //formats time inputs while user is typing using Text Watcher and textToValue()
-    private class TimeFormat {
-        EditText et;
-        String raw;
-        private TextWatcher timeFormatter = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (charSequence.toString().length() > 0) {
-                    raw += charSequence.toString();
-                    if (raw.length() > charSequence.length()) {
-                        raw = charSequence.toString().replaceAll("m", "");
-                        raw = raw.replaceAll(" ", "");
-                        raw = raw.replaceAll("s", "");
-                        et.removeTextChangedListener(this);
-                        et.setText(textToValue(raw));
-                        et.addTextChangedListener(this);
-                        et.setSelection(textToValue(raw).length() - 1);
-                    }
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-
-            }
-        };
-
-        public TimeFormat(EditText et) {
-            this.et = et;
-        }
-
-        public TextWatcher getTimeFormatter() {
-            return timeFormatter;
-        }
-    }
-
-    //user can input 010 to get 0m 10s or 2030 to get 20m 30s, also accounts for m and s being in the text. Returns seconds
-    public int textToValue(EditText et) {
-        String raw = et.getText().toString().trim();
-        int min, sec, index = 2;
-
-        try { //prone to crashing if user deletes only part of the text but not all and then enters
-            if (raw.contains("m") || raw.contains("s")) {
-                index = 5;
-
-
-                min = Integer.parseInt(
-                        raw.substring(0, raw.length() - index));
-                sec = Integer.parseInt(
-                        raw.substring(raw.length() - index + 2, raw.length() - 1));
-                if (sec >= 60) {
-                    min += sec / 60;
-                    sec = sec % 60;
-                }
-
-
-            } else {
-                if (raw.length() < 3) {
-                    min = 0;
-                    sec = Integer.parseInt(raw);
-                } else {
-                    min = Integer.parseInt(
-                            raw.substring(0, raw.length() - index));
-                    sec = Integer.parseInt(
-                            raw.substring(raw.length() - index));
-                }
-
-
-                if (sec >= 60) {
-                    min += sec / 60;
-                    sec = sec % 60;
-                }
-            }
-
-            et.setText(String.format(Locale.getDefault(), "%dm %02ds", min, sec));
-            return (min * 60 + sec);
-
-        } catch (NumberFormatException e) {
-            Toast.makeText(getActivity(), "Input proper format", Toast.LENGTH_SHORT).show();
-        } catch (StringIndexOutOfBoundsException e) {
-            Toast.makeText(getActivity(), "Input proper format", Toast.LENGTH_SHORT).show();
-        } catch (IndexOutOfBoundsException e) {
-            Toast.makeText(getActivity(), "Input proper format", Toast.LENGTH_SHORT).show();
-        }
-        return 0;
-    }
-
-    public String textToValue(String raw) {
-        int min, sec, index = 2;
-
-        try { //prone to crashing if user deletes only part of the text but not all and then enters
-            if (raw.contains("m") || raw.contains("s")) {
-                index = 5;
-
-
-                min = Integer.parseInt(
-                        raw.substring(0, raw.length() - index));
-                sec = Integer.parseInt(
-                        raw.substring(raw.length() - index + 2, raw.length() - 1));
-                if (sec >= 60) {
-                    min += sec / 60;
-                    sec = sec % 60;
-                }
-
-
-            } else {
-                if (raw.length() < 3) {
-                    min = 0;
-                    sec = Integer.parseInt(raw);
-                } else {
-                    min = Integer.parseInt(
-                            raw.substring(0, raw.length() - index));
-                    sec = Integer.parseInt(
-                            raw.substring(raw.length() - index));
-                }
-
-
-//                if (sec >= 60) {
-//                    min += sec / 60;
-//                    sec = sec % 60;
-//                }
-            }
-
-            return String.format(Locale.getDefault(), "%dm %02ds", min, sec);
-
-        } catch (NumberFormatException e) {
-            Toast.makeText(getActivity(), "Input proper format", Toast.LENGTH_SHORT).show();
-        } catch (StringIndexOutOfBoundsException e) {
-            Toast.makeText(getActivity(), "Input proper format", Toast.LENGTH_SHORT).show();
-        } catch (IndexOutOfBoundsException e) {
-            Toast.makeText(getActivity(), "Input proper format", Toast.LENGTH_SHORT).show();
-        }
-        return "";
-    }
 
 }

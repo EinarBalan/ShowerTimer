@@ -103,19 +103,19 @@ public class Shower {
         this.showerLengthMinutes = showerLengthMinutes;
     }
 
-    public double getGallonsPerMinute() {
+    public static double getGallonsPerMinute() {
         return gallonsPerMinute;
     }
 
-    public void setGallonsPerMinute(double gallonsPerMinute) {
-        this.gallonsPerMinute = gallonsPerMinute;
+    public static void setGallonsPerMinute(double gpm) {
+        gallonsPerMinute = gpm;
     }
 
-    public double getDollarsPerGallon() {
+    public static double getDollarsPerGallon() {
         return dollarsPerGallon;
     }
 
-    public void setDollarsPerGallon(double dollarsPerGallon) {
-        this.dollarsPerGallon = dollarsPerGallon;
+    public static void setDollarsPerGallon(double dpg) {
+        dollarsPerGallon = dpg;
     }
 }

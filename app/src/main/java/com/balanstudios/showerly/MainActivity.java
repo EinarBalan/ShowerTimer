@@ -1,16 +1,26 @@
 package com.balanstudios.showerly;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.net.ConnectivityManager;
+import android.os.Handler;
+import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -31,6 +41,8 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -42,6 +54,11 @@ public class MainActivity extends AppCompatActivity {
     private FragmentManager fragmentManager;
     long backPressedTime = 0;
 
+    //sound
+    private SoundPool soundPool;
+    public static int interval_end_ID;
+    public static int timer_end_ID;
+
     //firebase and user data storage.
     private FirebaseAuth firebaseAuth;
     private FirebaseUser currentUser;
@@ -51,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
     String userShowersJson = "";
     private String email;
     private String displayName;
+    private String city;
 
     private ArrayList<Shower> userShowers = new ArrayList<>();
     private long goalTimeMillis = 600000;
@@ -61,6 +79,12 @@ public class MainActivity extends AppCompatActivity {
     private int numShowers = 0;
     private int goalsMet = 0;
 
+    //location services
+    private double latitude = 0.0;
+    private double longitude = 0.0;
+    private Location gpa_loc = null, network_loc = null, final_loc=null;
+    private LocationManager locationManager;
+
     //stats access keys
     public static final String KEY_USER_SHOWERS = "USER_SHOWERS";
     public static final String KEY_TOTAL_TIME = "TOTAL_TIME";
@@ -70,6 +94,19 @@ public class MainActivity extends AppCompatActivity {
     public static final String KEY_GOAL_TIME = "GOAL_TIME_MILLIS";
     public static final String KEY_NUM_SHOWERS = "KEY_NUM_SHOWERS";
     public static final String KEY_GOALS_MET = "KEY_GOALS_MET";
+    public static final String KEY_CITY = "CITY";
+    public static final String KEY_GPM = "GALLONS_PER_MINUTE";
+    public static final String KEY_DPG = "DOLLARS_PER_GALLON";
+    public static final String KEY_DARK_MODE = "DARK_MODE";
+    public static final String KEY_IS_INTERVAL_ALERTS = "IS_INTERVAL ALERTS";
+    public static final String KEY_ALERT_FREQUENCY = "ALERT_FREQUENCY";
+    public static final String KEY_VIBRATE = "VIBRATE";
+
+    //settings
+    private boolean isDarkMode = false;
+    private boolean isIntervalAlertsOn = true;
+    private boolean isVibrateEnabled = false;
+    private long alertFrequencySeconds = 300;
 
     //cache
     public static final String SHARED_PREFS = "sharedPrefs";
@@ -81,19 +118,12 @@ public class MainActivity extends AppCompatActivity {
     private double avgShowerLengthMinutesCache = 0;
     private int numShowersCache = 0;
     private int goalsMetCache = 0;
+    private String cityCache;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-
-        profileFragment = new ProfileFragment();
-        homeFragment = new HomeFragment();
-        leaderboardsFragment = new LeaderboardsFragment();
-
-        fragmentManager = getSupportFragmentManager();
 
         //firebase code
         firebaseAuth = FirebaseAuth.getInstance();
@@ -106,8 +136,39 @@ public class MainActivity extends AppCompatActivity {
         loadUserShowersFromFireStore();
         loadUserLifetimeStatsFromFireStore();
         loadUserDisplayName();
-        loadGoalTime();
+        loadUserPreferencesFirebase(); //load edit profile information
         loadCache();
+        loadSettings(); //load device setting information
+        loadSettingsFromFirestore(); //load firestore account settings information
+
+        //location
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        //sound
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+        soundPool = new SoundPool.Builder()
+                .setAudioAttributes(audioAttributes)
+                .build();
+        interval_end_ID = soundPool.load(this, R.raw.interval_end, 1);
+        timer_end_ID = soundPool.load(this, R.raw.timer_end, 1);
+
+        if (isDarkMode) {
+            setTheme(R.style.ShowerTimerDark);
+        }
+
+        setContentView(R.layout.activity_main);
+
+
+        profileFragment = new ProfileFragment();
+        homeFragment = new HomeFragment();
+        leaderboardsFragment = new LeaderboardsFragment();
+
+        fragmentManager = getSupportFragmentManager();
+
+
 
         //navbar code
         mainNavBar = findViewById(R.id.mainNavBar);
@@ -125,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
                         return true;
                     case R.id.navItemProfile:
                         if (mainNavBar.getSelectedItemId() != R.id.navItemProfile){
-                            setFragment(profileFragment);
+                            setFragment(new ProfileCollapseFragment());
                         }
                         return true;
                     case R.id.navItemLeaderboards:
@@ -142,7 +203,16 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        soundPool.release();
+        soundPool = null;
+    }
+
     public void logOut(){
+        saveSettingsToFirestore();
+
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
@@ -222,6 +292,19 @@ public class MainActivity extends AppCompatActivity {
             return isNetworkConnected();
     }
 
+    public boolean saveToFireStore(String KEY, Boolean value) {
+        if (isNetworkConnected()) { //will only attempt to save if network is connected
+
+            Map<String, Object> note = new HashMap<>();
+            note.put(KEY, value);
+
+            documentReference.set(note, SetOptions.merge());
+            return isNetworkConnected();
+        }
+        else
+            return isNetworkConnected();
+    }
+
     public boolean saveToFireStore(String KEY01, double value01, String KEY02, double value02, String KEY03, double value03, String KEY04, double value04) {
         if (isNetworkConnected()) { //will only attempt to save if network is connected
 
@@ -259,7 +342,6 @@ public class MainActivity extends AppCompatActivity {
                                         goalsMet++;
                                     }
                                 }
-                                //Log.d("Debug", "inital load from firestore" + userShowers);
                                 saveCache();
                             }
 
@@ -296,15 +378,18 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    public void loadGoalTime(){
+    public void loadUserPreferencesFirebase(){
         documentReference.get()
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
                         if (documentSnapshot.getLong(KEY_GOAL_TIME) != null){
                             goalTimeMillis = documentSnapshot.getLong(KEY_GOAL_TIME);
-                            saveCache();
                         }
+                        if (documentSnapshot.getString(KEY_CITY) != null){
+                            city = documentSnapshot.getString(KEY_CITY);
+                        }
+                        saveCache();
                     }
                 });
     }
@@ -316,6 +401,7 @@ public class MainActivity extends AppCompatActivity {
 
         currentUser.updateProfile(profile);
     }
+
 
     public void loadUserDisplayName(){
         displayName = currentUser.getDisplayName();
@@ -333,6 +419,7 @@ public class MainActivity extends AppCompatActivity {
         editor.putLong(KEY_GOAL_TIME, goalTimeMillis);
         editor.putInt(KEY_NUM_SHOWERS, numShowers);
         editor.putInt(KEY_GOALS_MET, goalsMet);
+        editor.putString(KEY_CITY, city);
         editor.apply();
 
     }
@@ -352,6 +439,7 @@ public class MainActivity extends AppCompatActivity {
         totalTimeMinutesCache = Double.longBitsToDouble(sharedPreferences.getLong(KEY_TOTAL_TIME, Double.doubleToLongBits(0)));
         totalVolumeCache = Double.longBitsToDouble(sharedPreferences.getLong(KEY_TOTAL_VOLUME, Double.doubleToLongBits(0)));
         goalTimeMillisCache = sharedPreferences.getLong(KEY_GOAL_TIME, 600000);
+        city = sharedPreferences.getString(KEY_CITY, "");
 
 
         numShowersCache = userShowersCache.size(); //Log.d("DEBUG", "" + userShowers); Log.d("DEBUG", numShowersCache + " " + numShowers);
@@ -363,11 +451,99 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void saveSettings(){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putLong(KEY_GPM, Double.doubleToRawLongBits(Shower.getGallonsPerMinute()));
+        editor.putLong(KEY_DPG, Double.doubleToRawLongBits(Shower.getDollarsPerGallon()));
+        editor.putBoolean(KEY_DARK_MODE, isDarkMode);
+        editor.putBoolean(KEY_IS_INTERVAL_ALERTS, isIntervalAlertsOn);
+        editor.putBoolean(KEY_VIBRATE, isVibrateEnabled);
+        editor.putLong(KEY_ALERT_FREQUENCY, alertFrequencySeconds);
+
+        editor.apply();
+    }
+
+    public void saveSettingsToFirestore(){
+        saveToFireStore(KEY_GPM, Shower.getGallonsPerMinute());
+        saveToFireStore(KEY_DPG, Shower.getDollarsPerGallon());
+        saveToFireStore(KEY_DARK_MODE, isDarkMode);
+        saveToFireStore(KEY_IS_INTERVAL_ALERTS, isIntervalAlertsOn);
+        saveToFireStore(KEY_VIBRATE, isVibrateEnabled);
+        saveToFireStore(KEY_ALERT_FREQUENCY, alertFrequencySeconds);
+    }
+
+    public void loadSettings(){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+
+        Shower.setGallonsPerMinute(Double.longBitsToDouble(sharedPreferences.getLong(KEY_GPM, Double.doubleToLongBits(2.1))));
+        Shower.setDollarsPerGallon(Double.longBitsToDouble(sharedPreferences.getLong(KEY_DPG, Double.doubleToLongBits(.0015))));
+        isDarkMode = sharedPreferences.getBoolean(KEY_DARK_MODE, false);
+        isIntervalAlertsOn = sharedPreferences.getBoolean(KEY_IS_INTERVAL_ALERTS, true);
+        isVibrateEnabled = sharedPreferences.getBoolean(KEY_VIBRATE, false);
+        alertFrequencySeconds = sharedPreferences.getLong(KEY_ALERT_FREQUENCY, 300);
+
+    }
+
+    public void loadSettingsFromFirestore(){
+        documentReference.get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        if (documentSnapshot.getDouble(KEY_GPM) != null && documentSnapshot.getDouble(KEY_DPG) != null && documentSnapshot.getBoolean(KEY_DARK_MODE) != null
+                                && documentSnapshot.getBoolean(KEY_IS_INTERVAL_ALERTS) != null && documentSnapshot.getBoolean(KEY_VIBRATE) != null && documentSnapshot.getLong(KEY_ALERT_FREQUENCY) != null) {
+
+                            Shower.setGallonsPerMinute(documentSnapshot.getDouble(KEY_GPM));
+                            Shower.setDollarsPerGallon(documentSnapshot.getDouble(KEY_DPG));
+//                            isIntervalAlertsOn = documentSnapshot.getBoolean(KEY_IS_INTERVAL_ALERTS);
+                            isVibrateEnabled = documentSnapshot.getBoolean(KEY_VIBRATE);
+                            alertFrequencySeconds = documentSnapshot.getLong(KEY_ALERT_FREQUENCY);
+
+                            saveSettings();
+                        }
+                    }
+                });
+
+    }
+
+    public void playAlertSound(int ALERT_ID){
+        soundPool.play(ALERT_ID, 1, 1, 0, 0, 1);
+
+    }
+
+    public void vibrate(int numVibrations) {
+        if (isVibrateEnabled && ContextCompat.checkSelfPermission(this, Manifest.permission.VIBRATE) == PackageManager.PERMISSION_GRANTED) {
+            Vibrator v = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+            switch (numVibrations) {
+                case 1:
+                    long[] pattern01 = {0, 250};
+                    v.vibrate(pattern01, -1);
+                    break;
+                case 2:
+                    long[] pattern02 = {0, 150, 50, 150};
+                    v.vibrate(pattern02, -1);
+
+                    break;
+                case 3:
+                    long[] pattern03 = {0, 400, 50, 400, 50, 400};
+                    v.vibrate(pattern03, -1);
+                    break;
+                default:
+                    long[] pattern = {0, 250};
+                    v.vibrate(pattern, -1);
+                    break;
+            }
+        }
+        else if (ContextCompat.checkSelfPermission(this, Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED){
+            Toast.makeText(this, "Vibrate permission not granted", Toast.LENGTH_SHORT);
+        }
+    }
     //use to replace current fragment with new
     public void setFragment(Fragment f) {
-        fragmentManager.beginTransaction()
-                .replace(R.id.mainFrame, f, "NAV_FRAGMENT")
-                .commit();
+        new Handler().post(new FragmentRunnable(fragmentManager, f){ //prevents initial response lag in navbar
+        });
+
     }
 
     public void setFragmentReturnableSlide(Fragment f) {
@@ -417,6 +593,65 @@ public class MainActivity extends AppCompatActivity {
         }
         avgShowerLengthMinutes = sum / (double)(userShowers.size());
         return avgShowerLengthMinutes;
+    }
+
+    public String findCity(){
+        try {
+            network_loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        }
+        catch (SecurityException e){
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Cannot find location. Permission rejection.", Toast.LENGTH_SHORT).show();
+        }
+
+        if (network_loc != null){
+            final_loc = network_loc;
+            latitude = final_loc.getLatitude();
+            longitude = final_loc.getLongitude();
+        }
+
+        try {
+            Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+            List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+            if (addresses != null){
+                if (addresses.size() > 0){
+                    Toast.makeText(getApplicationContext(), "City found!", Toast.LENGTH_SHORT).show();
+                    return addresses.get(0).getLocality();
+                }
+            }
+        }
+        catch (Exception e){
+
+        }
+        return "";
+    }
+
+    public double getLatitude(){
+        try {
+            network_loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        }
+        catch (SecurityException e){
+            Toast.makeText(getApplicationContext(), "Cannot find location. Permission rejection.", Toast.LENGTH_SHORT).show();
+        }
+
+        if (network_loc != null){
+            return network_loc.getLatitude();
+        }
+        return 0;
+    }
+
+    public double getLongitude(){
+        try {
+            network_loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        }
+        catch (SecurityException e){
+            Toast.makeText(getApplicationContext(), "Cannot find location. Permission rejection.", Toast.LENGTH_SHORT).show();
+        }
+
+        if (network_loc != null){
+            return network_loc.getLongitude();
+        }
+        return 0;
     }
 
     /*
@@ -553,5 +788,68 @@ public class MainActivity extends AppCompatActivity {
 
     public void setGoalsMetCache(int goalsMetCache) {
         this.goalsMetCache = goalsMetCache;
+    }
+
+    public String getCity(){
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getCityCache() {
+        return cityCache;
+    }
+
+    public void setCityCache(String cityCache) {
+        this.cityCache = cityCache;
+    }
+
+    public boolean isDarkMode() {
+        return isDarkMode;
+    }
+
+    public void setDarkMode(boolean darkMode) {
+        isDarkMode = darkMode;
+    }
+
+    public long getAlertFrequencySeconds() {
+        return alertFrequencySeconds;
+    }
+
+    public void setAlertFrequencySeconds(long alertFrequencySeconds) {
+        this.alertFrequencySeconds = alertFrequencySeconds;
+    }
+
+    public boolean isIntervalAlertsOn() {
+        return isIntervalAlertsOn;
+    }
+
+    public void setIntervalAlertsOn(boolean intervalAlertsOn) {
+        isIntervalAlertsOn = intervalAlertsOn;
+    }
+
+    public boolean isVibrateEnabled() {
+        return isVibrateEnabled;
+    }
+
+    public void setVibrateEnabled(boolean vibrateEnabled) {
+        isVibrateEnabled = vibrateEnabled;
+    }
+}
+
+class FragmentRunnable implements Runnable {
+    FragmentManager fragmentManager;
+    Fragment f;
+    public FragmentRunnable(FragmentManager fm, Fragment f) {
+        fragmentManager = fm;
+        this.f = f;
+    }
+    @Override
+    public void run() {
+        fragmentManager.beginTransaction()
+                .replace(R.id.mainFrame, f, "NAV_FRAGMENT")
+                .commit();
     }
 }

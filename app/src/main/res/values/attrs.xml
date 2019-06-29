@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="styleable">
+        <attr name="colorPrimary" format="color"/>
+        <attr name="colorPrimaryDark" format="color"/>
+        <attr name="colorPrimaryLight" format="color"/>
+        <attr name="colorAccent" format="color"/>
+        <attr name="colorWindowBackground" format="color"/>
+        <attr name="colorCardBackground" format="color"/>
+        <attr name="statusBarColor" format="color"/>
+        <attr name="colorEdgeEffect" format="color"/>
+        <attr name="colorUnfocused" format="color"/>
+        <attr name="colorDarkText" format="color"/>
+        <attr name="colorLightText" format="color"/>
+        <attr name="colorDivider" format="color"/>
+
+    </declare-styleable>
+</resources>
