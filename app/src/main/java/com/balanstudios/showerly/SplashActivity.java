@@ -1,9 +1,14 @@
 package com.balanstudios.showerly;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +20,8 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -34,6 +41,7 @@ public class SplashActivity extends AppCompatActivity {
     private LinearLayout buttonLayout;
     private Button buttonLogIn;
     private Button buttonSignUp;
+    private Button buttonGuest;
     private ProgressBar progressBarSplash;
 
     @Override
@@ -46,12 +54,20 @@ public class SplashActivity extends AppCompatActivity {
         buttonLayout = findViewById(R.id.buttonLayout);
         buttonLogIn = findViewById(R.id.buttonLogIn); buttonLogIn.setOnClickListener(onClickListener);
         buttonSignUp = findViewById(R.id.buttonSignUp); buttonSignUp.setOnClickListener(onClickListener);
+        buttonGuest = findViewById(R.id.buttonGuest); buttonGuest.setOnClickListener(onClickListener);
         progressBarSplash = findViewById(R.id.progressBarSplash);
 
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         firebaseAuth = FirebaseAuth.getInstance();
         email = sharedPreferences.getString(EMAIL, "");
         password = sharedPreferences.getString(PASSWORD, "");
+
+//        if (!isNetworkConnected()){
+//            Toast.makeText(this, "No network connection. Signing in as guest.", Toast.LENGTH_SHORT).show();
+//            Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
+//            startActivity(mainIntent);
+//            finish();
+//        }
 
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -86,6 +102,10 @@ public class SplashActivity extends AppCompatActivity {
                     startActivity(signUpIntent);
                     overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                     break;
+
+                case R.id.buttonGuest:
+                    proceedAsGuest();
+                    break;
             }
 
 
@@ -119,5 +139,49 @@ public class SplashActivity extends AppCompatActivity {
             }
         });
     }
+
+    public boolean isNetworkConnected() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        return cm.getActiveNetworkInfo() != null;
+    }
+
+    public void proceedAsGuest(){
+        final AlertDialog alertDialog = new AlertDialog.Builder(this)
+                .setTitle("Are you sure?")
+                .setMessage("Guest users do not have access to many features such as shower history, usage graphs, and the community leaderboards.\n\nAre you sure you want to continue without making an account?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        firebaseAuth.signInAnonymously().addOnSuccessListener(new OnSuccessListener<AuthResult>() {
+                            @Override
+                            public void onSuccess(AuthResult authResult) {
+                                Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
+                                startActivity(mainIntent);
+                                finish();
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(getApplicationContext(), "Couldn't sign in. Check your network connection.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                })
+                .create();
+
+        alertDialog.show();
+
+
+    }
+
 
 }

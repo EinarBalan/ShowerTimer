@@ -1,6 +1,7 @@
 package com.balanstudios.showerly;
 
 
+import android.content.DialogInterface;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -66,8 +67,8 @@ public class HomeFragment extends Fragment {
     private double elapsedTimeMinutes = 0;
     private double instanceVolume = 0;
     private double instanceCost = 0;
-    private Calendar calendar = Calendar.getInstance();
     private SimpleDateFormat sdf = new SimpleDateFormat("h:mm a");
+    private Calendar calendar = Calendar.getInstance();
     private String instanceDate = DateFormat.getInstance().format(calendar.getTime()).substring(0, DateFormat.getInstance().format(calendar.getTime()).indexOf(" "));
     private String instanceTime = "";
 
@@ -113,12 +114,22 @@ public class HomeFragment extends Fragment {
         mainActivity.loadCache();
         updateCachedText();
 
-        new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
-            @Override
-            public void run() {
-                updateLifetimeStatsTextViews();
-            }
-        }, 3000);
+        if (!mainActivity.isUserAnon()) {
+            new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
+                @Override
+                public void run() {
+                    updateLifetimeStatsTextViews();
+                }
+            }, 3000);
+        }
+        else {
+            buttonSave.setText("Settings");
+            textViewTimeSpent.setText("---");
+            textViewAvgShowerLength.setText("---");
+            textViewTotalVolume.setText("---");
+            textViewTotalCost.setText("---");
+
+        }
 
         return v;
     }
@@ -133,7 +144,14 @@ public class HomeFragment extends Fragment {
                     toggleTimer(view);
                     break;
                 case R.id.buttonReset:
-                    resetTimer(view);
+                    if (elapsedTimeMillis > 0) {
+                        mainActivity.showAlertDialog("Reset timer?", "The data for this timer will be lost. Are you sure you want to reset?", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                resetTimer(buttonReset);
+                            }
+                        });
+                    }
                     break;
                 case R.id.buttonSave:
                     saveShower();
@@ -155,11 +173,17 @@ public class HomeFragment extends Fragment {
             elapsedTimeMinutes = (double)elapsedTimeMillis / 1000 / 60;
 
             if (mainActivity.isIntervalAlertsOn()) { //interval alert system
-                if ((elapsedTimeMillis / 1000) % mainActivity.getAlertFrequencySeconds() == 0 && elapsedTimeMillis > 1000) {
+                if (elapsedTimeMillis - mainActivity.getGoalTimeMillis() >= 0 && elapsedTimeMillis - mainActivity.getGoalTimeMillis() <= 300){
+                    mainActivity.playAlertSound(MainActivity.timer_end_ID);
+                    mainActivity.vibrate(3);
+                }
+                else if ((elapsedTimeMillis / 1000) % mainActivity.getAlertFrequencySeconds() == 0 && elapsedTimeMillis > 1000) {
                     mainActivity.playAlertSound(MainActivity.interval_end_ID);
                     mainActivity.vibrate(2);
 //                    Toast.makeText(getActivity(), "Alert", Toast.LENGTH_SHORT).show();
                 }
+
+
             }
 
             //update progress bars
@@ -217,6 +241,11 @@ public class HomeFragment extends Fragment {
             getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
             //button hide animation
+
+            if (mainActivity.isUserAnon()) {
+                buttonSave.setAlpha(.5f);
+            }
+
             buttonReset.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fade_out_fast));
             buttonReset.setVisibility(View.GONE);
             buttonSave.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fade_out_fast));
@@ -237,6 +266,8 @@ public class HomeFragment extends Fragment {
                     mainActivity.getMainNavBar().startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.slide_down));
                 }
                 mainActivity.getMainNavBar().setVisibility(View.GONE);
+                Calendar calendar = Calendar.getInstance();
+                instanceDate = DateFormat.getInstance().format(calendar.getTime()).substring(0, DateFormat.getInstance().format(calendar.getTime()).indexOf(" "));
                 instanceTime = sdf.format(calendar.getTime());
             }
         }
@@ -253,49 +284,58 @@ public class HomeFragment extends Fragment {
 
         //reset stats here
         progressBarOverflow.setProgress(0);
-
-        mainActivity.getMainNavBar().setVisibility(View.VISIBLE);
+        if (mainActivity.isUserAnon()){
+            buttonSave.setAlpha(1);
+        }
+        else {
+            mainActivity.getMainNavBar().setVisibility(View.VISIBLE);
+        }
     }
 
     public void saveShower(){
-        if (elapsedTimeMillis > 15000){
+        if (!mainActivity.isUserAnon()) {
+            if (elapsedTimeMillis > 15000) {
 
-            //add shower to user's account (getUserShower used so that showers are stored locally rather than only on database ---> fewer required accesses from client)
-            mainActivity.getUserShowers().add(new Shower(elapsedTimeMillis, instanceDate, instanceTime, elapsedTimeMillis <= mainActivity.getGoalTimeMillis()));
+                //add shower to user's account (getUserShower used so that showers are stored locally rather than only on database ---> fewer required accesses from client)
+                mainActivity.getUserShowers().add(new Shower(elapsedTimeMillis, instanceDate, instanceTime, elapsedTimeMillis <= mainActivity.getGoalTimeMillis()));
 
-            //save shower
-            if (mainActivity.saveToFireStore(mainActivity.getUserShowers())) { //checks network connection
+                //save shower
+                if (mainActivity.saveToFireStore(mainActivity.getUserShowers())) { //checks network connection
 
-                //update lifetime stats (before reset timer you moron)
-                mainActivity.addTotalTimeMinutes(elapsedTimeMinutes);
-                mainActivity.addTotalCost(instanceCost);
-                mainActivity.addTotalVolume(instanceVolume);
+                    //update lifetime stats (before reset timer you moron)
+                    mainActivity.addTotalTimeMinutes(elapsedTimeMinutes);
+                    mainActivity.addTotalCost(instanceCost);
+                    mainActivity.addTotalVolume(instanceVolume);
 
 
-                resetTimer(buttonSave);
-                Toast.makeText(getActivity(), "Saved to my showers!", Toast.LENGTH_SHORT).show();
+                    resetTimer(buttonSave);
+                    Toast.makeText(getActivity(), "Saved to my showers!", Toast.LENGTH_SHORT).show();
 
-                mainActivity.saveToFireStore(KEY_TOTAL_TIME, mainActivity.getTotalTimeMinutes(), KEY_TOTAL_COST, mainActivity.getTotalCost(), KEY_TOTAL_VOLUME, mainActivity.getTotalVolume(), KEY_AVG_SHOWER_LEN, mainActivity.calculateAvgShowerLengthMinutes());
-                mainActivity.loadCache();
-                updateCachedText();
-                new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
-                    @Override
-                    public void run() {
-                        updateLifetimeStatsTextViews();
-                        mainActivity.saveCache();
-                    }
-                }, 3000);
-            }
-            else {
-                Toast.makeText(getActivity(), "Shower not saved. Network connection required.", Toast.LENGTH_SHORT).show();
-            }
+                    mainActivity.saveToFireStore(KEY_TOTAL_TIME, mainActivity.getTotalTimeMinutes(), KEY_TOTAL_COST, mainActivity.getTotalCost(), KEY_TOTAL_VOLUME, mainActivity.getTotalVolume(), KEY_AVG_SHOWER_LEN, mainActivity.calculateAvgShowerLengthMinutes());
+                    mainActivity.loadCache();
+                    updateCachedText();
+                    new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
+                        @Override
+                        public void run() {
+                            updateLifetimeStatsTextViews();
+                            mainActivity.saveCache();
+                        }
+                    }, 3000);
+                } else {
+                    Toast.makeText(getActivity(), "Shower not saved. Network connection required.", Toast.LENGTH_SHORT).show();
+                }
+            } else if (isTimerRunning) {
+                Toast.makeText(getActivity(), "Pause timer before saving.", Toast.LENGTH_SHORT).show();
+            } else
+                Toast.makeText(getActivity(), "Shower is too short to be saved!", Toast.LENGTH_SHORT).show();
         }
 
-        else if (isTimerRunning){
-            Toast.makeText(getActivity(), "Pause timer before saving.", Toast.LENGTH_SHORT).show();
+        else if (elapsedTimeMillis == 0) { //if anon
+            mainActivity.setFragmentReturnableSlide(new SettingsFragment());
         }
-        else
-            Toast.makeText(getActivity(), "Shower is too short to be saved!", Toast.LENGTH_SHORT).show();
+        else {
+            Toast.makeText(getActivity(), "Cannot open settings while timer is running.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void updateLifetimeStatsTextViews() {

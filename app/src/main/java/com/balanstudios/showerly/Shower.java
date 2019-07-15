@@ -26,7 +26,7 @@ public class Shower {
         this.showerLengthMillis = showerLengthMillis;
         showerLengthMinutes = (double)showerLengthMillis / 1000 / 60;
         volume = calculateVolume(showerLengthMinutes);
-        cost = calculateCost(showerLengthMinutes);
+        cost = calculateCost(volume);
         this.date = date;
         this.time = time;
         this.goalMet = goalMet;

@@ -4,6 +4,8 @@ package com.balanstudios.showerly;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,10 +32,12 @@ public class SettingsFragment extends Fragment {
 
     private ImageButton buttonBack;
     private Button buttonApply;
+    private Button buttonLogIn;
 
     private EditText editTextFlowRate;
     private EditText editTextCost;
     private EditText editTextAlertFrequency;
+    private EditText editTextGoalTime;
 
     private SeekBar seekBarVolume;
 
@@ -42,6 +46,7 @@ public class SettingsFragment extends Fragment {
     private Switch switchDarkMode;
 
     private LinearLayout linearLayoutAlertFrequency;
+    private LinearLayout linearLayoutGoal;
     private View dividerAlert;
 
     public SettingsFragment() {
@@ -59,17 +64,18 @@ public class SettingsFragment extends Fragment {
 
         mainActivity.loadSettings();
 
+
         buttonBack = v.findViewById(R.id.buttonBack);  buttonBack.setOnClickListener(onClickListener);
         buttonApply = v.findViewById(R.id.buttonApplyChanges); buttonApply.setOnClickListener(onClickListener);
+        buttonLogIn = v.findViewById(R.id.buttonLogIn); buttonLogIn.setOnClickListener(onClickListener);
 
         editTextFlowRate = v.findViewById(R.id.editTextFlowRate);  editTextFlowRate.setHint(Shower.getGallonsPerMinute() + " gallons per minute");
         editTextCost = v.findViewById(R.id.editTextCost); editTextCost.setHint(Shower.getDollarsPerGallon() * 100 + " cents per gallon");
         editTextAlertFrequency = v.findViewById(R.id.editTextAlertFrequency); editTextAlertFrequency.addTextChangedListener(new TimeFormat(editTextAlertFrequency, getActivity()).getTimeFormatter());
-        long sec = mainActivity.getAlertFrequencySeconds();
-        int min = (int)sec / 60;
-        sec %= 60;
-        editTextAlertFrequency.setText(String.format(Locale.getDefault(), "%dm %02ds", min, sec));
+        editTextGoalTime = v.findViewById(R.id.editTextGoalTime); editTextGoalTime.addTextChangedListener(new TimeFormat(editTextGoalTime, getActivity()).getTimeFormatter());
 
+        editTextAlertFrequency.setText(TimeFormat.valueToString(mainActivity.getAlertFrequencySeconds()));
+        editTextGoalTime.setText(TimeFormat.valueToString(mainActivity.getGoalTimeMillis() / 1000));
 
         seekBarVolume = v.findViewById(R.id.seekBarVolume); seekBarVolume.setOnSeekBarChangeListener(onSeekBarChangeListener);
 
@@ -88,6 +94,20 @@ public class SettingsFragment extends Fragment {
             dividerAlert.setVisibility(View.GONE);
         }
 
+        linearLayoutGoal = v.findViewById(R.id.linearlayoutGoal);
+        if (mainActivity.isUserAnon()){
+            linearLayoutGoal.setVisibility(View.VISIBLE);
+            buttonLogIn.setVisibility(View.VISIBLE);
+        }
+
+        //prevent leaving without applying changes by accident
+        editTextFlowRate.addTextChangedListener(textWatcher);
+        editTextGoalTime.addTextChangedListener(textWatcher);
+        editTextAlertFrequency.addTextChangedListener(textWatcher);
+        editTextCost.addTextChangedListener(textWatcher);
+
+        mainActivity.setSettingsChanged(false);
+
         return v;
     }
 
@@ -100,6 +120,10 @@ public class SettingsFragment extends Fragment {
                     break;
                 case R.id.buttonApplyChanges:
                     applyChanges();
+                    mainActivity.setSettingsChanged(false);
+                    break;
+                case R.id.buttonLogIn:
+                    mainActivity.logOutAnon();
                     break;
             }
         }
@@ -125,11 +149,14 @@ public class SettingsFragment extends Fragment {
    CompoundButton.OnCheckedChangeListener onCheckedChangeListener = new CompoundButton.OnCheckedChangeListener() {
        @Override
        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+           mainActivity.setSettingsChanged(true);
            switch (compoundButton.getId()) {
                case R.id.switchDarkMode:
                    mainActivity.setDarkMode(switchDarkMode.isChecked());
                    applyChanges();
-                   mainActivity.saveSettingsToFirestore();
+                   if (!mainActivity.isUserAnon()) {
+                       mainActivity.saveSettingsToFirestore();
+                   }
                    mainActivity.saveSettings();
 
                    Intent intent = new Intent(getActivity(), MainActivity.class);
@@ -137,6 +164,7 @@ public class SettingsFragment extends Fragment {
                    getActivity().finish();
                    break;
                case R.id.switchIntervalAlerts:
+                   mainActivity.setSettingsChanged(true);
                    if (switchIntervalAlerts.isChecked()){
                        linearLayoutAlertFrequency.setVisibility(View.VISIBLE);
                        dividerAlert.setVisibility(View.VISIBLE);
@@ -149,6 +177,23 @@ public class SettingsFragment extends Fragment {
            }
        }
    };
+
+    TextWatcher textWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            mainActivity.setSettingsChanged(true);
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+
+        }
+    };
 
    private void applyChanges(){
        if (editTextFlowRate.getText().toString().length() > 0){
@@ -163,12 +208,18 @@ public class SettingsFragment extends Fragment {
            mainActivity.setAlertFrequencySeconds(TimeFormat.textToValue(editTextAlertFrequency));
        }
 
+       if (TimeFormat.textToValue(editTextGoalTime) > 0){
+           mainActivity.setGoalTimeMillis(TimeFormat.textToValue(editTextGoalTime) * 1000);
+       }
+
        mainActivity.setDarkMode(switchDarkMode.isChecked());
        mainActivity.setIntervalAlertsOn(switchIntervalAlerts.isChecked());
        mainActivity.setVibrateEnabled(switchVibrations.isChecked());
 
        mainActivity.saveSettings();
-       mainActivity.saveSettingsToFirestore();
+       if (!mainActivity.isUserAnon()) {
+           mainActivity.saveSettingsToFirestore();
+       }
        Toast.makeText(getActivity(), "Changes saved!", Toast.LENGTH_SHORT).show();
 
 

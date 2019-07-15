@@ -188,6 +188,44 @@
                         android:layout_height="1dp"
                         android:theme="@style/Divider"></View>
 
+                    <LinearLayout
+                        android:id="@+id/linearlayoutGoal"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:paddingLeft="16dp"
+                        android:paddingTop="16dp"
+                        android:paddingRight="16dp"
+                        android:paddingBottom="16dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/textViewGoalTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Goal Time"
+                            android:textColor="?attr/colorDarkText"
+                            android:textSize="16sp" />
+
+                        <EditText
+                            android:id="@+id/editTextGoalTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:ems="10"
+                            android:hint="0m 00s"
+                            android:inputType="number"
+                            android:maxLength="7"
+                            android:selectAllOnFocus="true"
+                            android:text="10m 00s"
+                            android:textAlignment="viewEnd"
+                            android:textColor="?attr/colorLightText"
+                            android:textColorHint="?attr/colorLightText"
+                            android:textSize="16sp"
+                            tools:layout_editor_absoluteX="235dp" />
+                    </LinearLayout>
 
                 </LinearLayout>
 
@@ -482,6 +520,22 @@
                 android:textAllCaps="false"
                 android:textColor="?attr/colorCardBackground"
                 android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/buttonLogIn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/ripple_unfilled_primary"
+                android:stateListAnimator="@null"
+                android:text="Create Account"
+                android:textAllCaps="false"
+                android:textColor="?attr/colorPrimaryDark"
+                android:textStyle="bold"
+                android:visibility="gone" />
 
         </LinearLayout>
 

@@ -3,4 +3,8 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="water_emoji">&#128167;</string>
+    <string name="splash_emoji">&#128166;</string>
+    <string name="wave_emoji">>&#127754;</string>
+    <string name="world_emoji">>&#127759;</string>
 </resources>

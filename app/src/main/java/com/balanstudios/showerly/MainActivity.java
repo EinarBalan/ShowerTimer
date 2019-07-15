@@ -2,6 +2,7 @@ package com.balanstudios.showerly;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -15,13 +16,18 @@ import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
+import android.support.constraint.solver.widgets.Snapshot;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -31,9 +37,13 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -53,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private LeaderboardsFragment leaderboardsFragment;
     private FragmentManager fragmentManager;
     long backPressedTime = 0;
+    private boolean settingsChanged = false;
 
     //sound
     private SoundPool soundPool;
@@ -128,22 +139,46 @@ public class MainActivity extends AppCompatActivity {
         //firebase code
         firebaseAuth = FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
-        if (currentUser != null) {
-            email = currentUser.getEmail();
-            displayName = currentUser.getDisplayName();
+
+        if (!firebaseAuth.getCurrentUser().isAnonymous()) {
+
+            if (currentUser != null) {
+                email = currentUser.getEmail();
+                displayName = currentUser.getDisplayName();
+            }
+
+            documentReference = db.collection("Users").document(currentUser.getEmail()); //refers to document with user's shower list
+            loadUserShowersFromFireStore();
+            loadUserLifetimeStatsFromFireStore();
+            loadUserDisplayName();
+            loadUserPreferencesFirebase(); //load edit profile information
+            loadCache();
+            loadSettings(); //load device setting information
+            loadSettingsFromFirestore(); //load firestore account settings information
+
+            //location
+            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+            commonInit();
+
         }
-        documentReference = db.collection("Users").document(currentUser.getEmail()); //refers to document with user's shower list
-        loadUserShowersFromFireStore();
-        loadUserLifetimeStatsFromFireStore();
-        loadUserDisplayName();
-        loadUserPreferencesFirebase(); //load edit profile information
-        loadCache();
-        loadSettings(); //load device setting information
-        loadSettingsFromFirestore(); //load firestore account settings information
+        else {
+            loadSettings();
+            commonInit();
+            mainNavBar.setVisibility(View.GONE);
 
-        //location
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        soundPool.release();
+        soundPool = null;
+    }
+
+    public void commonInit(){
         //sound
         AudioAttributes audioAttributes = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
@@ -169,7 +204,6 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager = getSupportFragmentManager();
 
 
-
         //navbar code
         mainNavBar = findViewById(R.id.mainNavBar);
         mainNavBar.setSelectedItemId(R.id.navItemHome);
@@ -178,19 +212,19 @@ public class MainActivity extends AppCompatActivity {
         mainNavBar.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-                switch (menuItem.getItemId()){
+                switch (menuItem.getItemId()) {
                     case R.id.navItemHome:
-                        if (mainNavBar.getSelectedItemId() != R.id.navItemHome){
+                        if (mainNavBar.getSelectedItemId() != R.id.navItemHome) {
                             setFragment(homeFragment);
                         }
                         return true;
                     case R.id.navItemProfile:
-                        if (mainNavBar.getSelectedItemId() != R.id.navItemProfile){
+                        if (mainNavBar.getSelectedItemId() != R.id.navItemProfile) {
                             setFragment(new ProfileCollapseFragment());
                         }
                         return true;
                     case R.id.navItemLeaderboards:
-                        if (mainNavBar.getSelectedItemId() != R.id.navItemLeaderboards){
+                        if (mainNavBar.getSelectedItemId() != R.id.navItemLeaderboards) {
                             setFragment(leaderboardsFragment);
                         }
                         return true;
@@ -200,14 +234,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        soundPool.release();
-        soundPool = null;
     }
 
     public void logOut(){
@@ -216,6 +242,19 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
+        firebaseAuth.signOut();
+        editor.clear().apply();
+
+        Intent restart = new Intent(MainActivity.this, SplashActivity.class);
+        startActivity(restart);
+        finish();
+    }
+
+    public void logOutAnon(){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        firebaseAuth.signOut();
         editor.clear().apply();
 
         Intent restart = new Intent(MainActivity.this, SplashActivity.class);
@@ -462,6 +501,10 @@ public class MainActivity extends AppCompatActivity {
         editor.putBoolean(KEY_VIBRATE, isVibrateEnabled);
         editor.putLong(KEY_ALERT_FREQUENCY, alertFrequencySeconds);
 
+        if (isUserAnon()){
+            editor.putLong(KEY_GOAL_TIME, goalTimeMillis);
+        }
+
         editor.apply();
     }
 
@@ -483,6 +526,10 @@ public class MainActivity extends AppCompatActivity {
         isIntervalAlertsOn = sharedPreferences.getBoolean(KEY_IS_INTERVAL_ALERTS, true);
         isVibrateEnabled = sharedPreferences.getBoolean(KEY_VIBRATE, false);
         alertFrequencySeconds = sharedPreferences.getLong(KEY_ALERT_FREQUENCY, 300);
+
+        if (isUserAnon()){
+            goalTimeMillis = sharedPreferences.getLong(KEY_GOAL_TIME, 600000);
+        }
 
     }
 
@@ -509,7 +556,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void playAlertSound(int ALERT_ID){
         soundPool.play(ALERT_ID, 1, 1, 0, 0, 1);
-
     }
 
     public void vibrate(int numVibrations) {
@@ -568,16 +614,50 @@ public class MainActivity extends AppCompatActivity {
 
     //prevents accidental exits by user if presses back
     public void onBackPressed() {
-        if (fragmentManager.getBackStackEntryCount() > 0) {
-            fragmentManager.popBackStack();
+        if (isSettingsChanged()){ //prevents user leaving without applying settings
+            new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DialogStyle))
+                    .setTitle("Are you sure?")
+                    .setMessage("Do you want to leave without applying your changes?")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            settingsChanged = false;
+                            onBackPressed();
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                        }
+                    })
+                    .create().show();
         }
-        else if (backPressedTime + 2000 > System.currentTimeMillis()) {
-            finish();
-            moveTaskToBack(true);
-        } else {
-            Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+        else {
+            if (fragmentManager.getBackStackEntryCount() > 0) {
+                fragmentManager.popBackStack();
+            } else if (backPressedTime + 2000 > System.currentTimeMillis()) {
+                finish();
+                moveTaskToBack(true);
+            } else {
+                Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+            }
+            backPressedTime = System.currentTimeMillis();
         }
-        backPressedTime = System.currentTimeMillis();
+    }
+
+    public void showAlertDialog(String title, String message, DialogInterface.OnClickListener positiveOnClickListener){
+        new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DialogStyle))
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("Yes", positiveOnClickListener)
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                })
+                .create().show();
     }
 
     public boolean isNetworkConnected() {
@@ -652,6 +732,10 @@ public class MainActivity extends AppCompatActivity {
             return network_loc.getLongitude();
         }
         return 0;
+    }
+
+    public  boolean isUserAnon(){
+        return firebaseAuth.getCurrentUser().isAnonymous();
     }
 
     /*
@@ -837,6 +921,14 @@ public class MainActivity extends AppCompatActivity {
     public void setVibrateEnabled(boolean vibrateEnabled) {
         isVibrateEnabled = vibrateEnabled;
     }
+
+    public boolean isSettingsChanged() {
+        return settingsChanged;
+    }
+
+    public void setSettingsChanged(boolean settingsChanged) {
+        this.settingsChanged = settingsChanged;
+    }
 }
 
 class FragmentRunnable implements Runnable {
@@ -852,4 +944,6 @@ class FragmentRunnable implements Runnable {
                 .replace(R.id.mainFrame, f, "NAV_FRAGMENT")
                 .commit();
     }
+
+
 }

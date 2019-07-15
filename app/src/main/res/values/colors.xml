@@ -14,4 +14,12 @@
     <color name="hintTextColor">#FF7C7471</color>
     <color name="dividerColor">#ebebeb</color>
     <color name="linkColor">#0000EE</color>
+    <color name="transparentDarkMode">#22ffffff</color>
+    <color name="transparentLightMode">#22000000</color>
+    <color name="colorCardBackgroundLight">#11000000</color>
+    <color name="colorCardBackgroundDark">#11ffffff</color>
+    <color name="colorLightText">#c9c9c9</color>
+    <color name="colorDarkText">@android:color/white</color>
+    <color name="colorDarkBackground">#101010</color>
+
 </resources>

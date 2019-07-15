@@ -149,6 +149,26 @@ import java.util.Locale;
         }
         return "";
     }
+
+    public static String valueToString(int sec){
+        String format = "";
+
+        int min = sec / 60;
+        sec %= 60;
+        format = String.format(Locale.getDefault(), "%dm %02ds", min, sec);
+
+        return format;
+    }
+
+    public static String valueToString(long sec){
+        String format = "";
+
+        long min = sec / 60;
+        sec %= 60;
+        format = String.format(Locale.getDefault(), "%dm %02ds", min, sec);
+
+        return format;
+    }
 }
 
     

@@ -18,7 +18,6 @@
         <item name="colorLightText">#808080</item>
         <item name="colorDivider">#ebebeb</item>
 
-
     </style>
 
     <style name="ShowerTimerDark" parent="Theme.AppCompat.Light.NoActionBar">
@@ -55,5 +54,14 @@
         <item name="android:background">?attr/colorDivider</item>
 
     </style>
+
+    <style name="DialogStyle">
+        <item name="android:backgroundTint">?attr/colorCardBackground</item>
+        <item name="android:background">?attr/colorCardBackground</item>
+        <item name="android:textColorPrimary">?attr/colorDarkText</item>
+        <item name="android:titleTextColor">?attr/colorDarkText</item>
+
+    </style>
+
 
 </resources>

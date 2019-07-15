@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -68,6 +69,7 @@ public class EditProfileFragment extends Fragment {
         mainActivity = (MainActivity) getActivity();
 //        TimeFormat timeFormat = new TimeFormat(editTextGoalTime, getActivity()); //initialize TimeFormat
 
+
         textViewAddCity = v.findViewById(R.id.textViewAddCity); textViewAddCity.setOnClickListener(onClickListener);
         textViewSendEmail = v.findViewById(R.id.textViewSendEmail); textViewSendEmail.setOnClickListener(onClickListener);
 
@@ -94,6 +96,18 @@ public class EditProfileFragment extends Fragment {
             textViewAddCity.setText(mainActivity.getCity());
         }
 
+        //prevent leaving without saving
+        editTextDisplayName.addTextChangedListener(textWatcher);
+        editTextGoalTime.addTextChangedListener(textWatcher);
+
+        new Handler().postDelayed(new Runnable() { //has to be delayed. Won't work otherwise for some reason
+            @Override
+            public void run() {
+                mainActivity.setSettingsChanged(false);
+
+            }
+        }, 150);
+
         return v;
     }
 
@@ -109,28 +123,60 @@ public class EditProfileFragment extends Fragment {
                     break;
                 case R.id.buttonApplyChanges:
                     applyChanges();
+                    mainActivity.setSettingsChanged(false);
                     break;
                 case R.id.buttonLogOut:
-                    //insert are you sure dialog here
-                    mainActivity.logOut();
+                    mainActivity.showAlertDialog("Log out?", "Your shower data and settings will be saved if you log out. Proceed?", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            mainActivity.logOut();
+                        }
+                    });
                     break;
                 case R.id.textViewAddCity:
                     if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-                        textViewAddCity.setText(mainActivity.findCity());
+                        if (mainActivity.findCity().length() > 0) {
+                            textViewAddCity.setText(mainActivity.findCity());
+                            mainActivity.setSettingsChanged(true);
+                        }
 
                     }
                     else {
                         requestLocationPermission();
-                        textViewAddCity.setText(mainActivity.findCity());
+                        if (mainActivity.findCity().length() > 0) {
+                            textViewAddCity.setText(mainActivity.findCity());
+                            mainActivity.setSettingsChanged(true);
+
+                        }
                     }
                     break;
                 case R.id.textViewSendEmail:
-                    //are you sure?
-                    //send reset password email
-                    mainActivity.sendResetPasswordEmail();
-                    //log out
+                    mainActivity.showAlertDialog("Send email?", "You will be automatically logged out. Proceed?", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            mainActivity.sendResetPasswordEmail();
+                            mainActivity.logOut();
+                        }
+                    });
                     break;
             }
+        }
+    };
+
+    TextWatcher textWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            mainActivity.setSettingsChanged(true);
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+
         }
     };
 
