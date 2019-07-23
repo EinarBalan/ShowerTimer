@@ -39,6 +39,9 @@ public class ProfileCalendarFragment extends Fragment {
     private CardView cardViewWeek;
 
     private TextView textViewNoShowerData;
+
+    private boolean isWeekChartSelected = false;
+    private boolean isMonthCartSelected = false;
     
     public ProfileCalendarFragment() {
         // Required empty public constructor
@@ -70,8 +73,11 @@ public class ProfileCalendarFragment extends Fragment {
             chartWeek.setDrawValueAboveBar(false);
             chartWeek.setMaxVisibleValueCount(60);
             chartWeek.setPinchZoom(false);
+            chartWeek.setScaleEnabled(false);
             chartWeek.setDrawGridBackground(true);
             chartWeek.getDescription().setEnabled(false);
+//            chartWeek.setTouchEnabled(false);
+            chartWeek.setOnClickListener(onClickListener);
             initWeekChart();
         }
         else {
@@ -85,8 +91,11 @@ public class ProfileCalendarFragment extends Fragment {
             chartMonth.setDrawValueAboveBar(false);
             chartMonth.setMaxVisibleValueCount(60);
             chartMonth.setPinchZoom(false);
+            chartMonth.setScaleEnabled(false);
             chartMonth.setDrawGridBackground(true);
             chartMonth.getDescription().setEnabled(false);
+//            chartMonth.setTouchEnabled(false);
+            chartMonth.setOnClickListener(onClickListener);
             initMonthChart();
         }
         else {
@@ -102,6 +111,8 @@ public class ProfileCalendarFragment extends Fragment {
             chartYear.setPinchZoom(false);
             chartYear.setDrawGridBackground(true);
             chartYear.getDescription().setEnabled(false);
+            chartYear.setTouchEnabled(false);
+//            chartYear.setOnClickListener(onClickListener);
             initYearChart();
         }
         else {
@@ -111,6 +122,29 @@ public class ProfileCalendarFragment extends Fragment {
         
         return v;
     }
+
+    View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.chartWeek:
+                isWeekChartSelected = !isWeekChartSelected;
+                chartWeek.setDrawValueAboveBar(isWeekChartSelected);
+                break;
+            case R.id.chartMonth:
+                isMonthCartSelected = !isMonthCartSelected;
+                if (isMonthCartSelected){
+                    chartMonth.getData().setValueTextSize(6f);
+                }
+                else {
+                    chartMonth.getData().setValueTextSize(0f);
+                }
+                chartMonth.setDrawValueAboveBar(isMonthCartSelected);
+                break;
+
+        }
+        }
+    };
 
     public void initWeekChart(){
         ArrayList<BarEntry> weekEntries = new ArrayList<>();
@@ -159,7 +193,7 @@ public class ProfileCalendarFragment extends Fragment {
         ArrayList<BarEntry> monthEntries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
-        for (int i = 1; i < 30; i++) {
+        for (int i = 1; i < 31; i++) {
             try {
                 monthEntries.add(new BarEntry(30 - i, (float) mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getShowerLengthMinutes()));
 //                labels.add("");
@@ -178,7 +212,7 @@ public class ProfileCalendarFragment extends Fragment {
         data.setHighlightEnabled(false);
         data.setValueTextColor(colors.get(0));
         data.setValueTextSize(0f);
-        data.setBarWidth(.3f);
+        data.setBarWidth(.4f);
 
 
         chartMonth.setData(data);
@@ -200,7 +234,7 @@ public class ProfileCalendarFragment extends Fragment {
         ArrayList<BarEntry> yearEntries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
-        for (int i = 1; i < 365; i++) {
+        for (int i = 1; i < 366; i++) {
             try {
                 yearEntries.add(new BarEntry(365 - i, (float) mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getShowerLengthMinutes()));
 //                labels.add("");
@@ -218,6 +252,7 @@ public class ProfileCalendarFragment extends Fragment {
         BarData data = new BarData(barDataSet);
         data.setHighlightEnabled(false);
         data.setValueTextColor(colors.get(0));
+        data.setValueTextSize(0f);
         data.setBarWidth(.025f);
 
 

@@ -14,13 +14,9 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.Toast;
-
-import java.sql.Time;
-import java.util.Locale;
 
 
 /**

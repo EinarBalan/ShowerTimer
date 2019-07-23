@@ -16,7 +16,6 @@ import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
-import android.support.constraint.solver.widgets.Snapshot;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -24,7 +23,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,13 +35,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -75,13 +69,16 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseUser currentUser;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private DocumentReference documentReference;
+    private DocumentReference leaderboardReference;
     private Gson gson = new Gson();
     String userShowersJson = "";
+    String top25UsersJson = "";
     private String email;
     private String displayName;
     private String city;
 
     private ArrayList<Shower> userShowers = new ArrayList<>();
+    private ArrayList<ShowerlyUser> top25Users = new ArrayList<>();
     private long goalTimeMillis = 600000;
     private double totalCost = 0;
     private double totalVolume = 0;
@@ -93,11 +90,12 @@ public class MainActivity extends AppCompatActivity {
     //location services
     private double latitude = 0.0;
     private double longitude = 0.0;
-    private Location gpa_loc = null, network_loc = null, final_loc=null;
+    private Location network_loc = null, final_loc=null;
     private LocationManager locationManager;
 
     //stats access keys
     public static final String KEY_USER_SHOWERS = "USER_SHOWERS";
+    public static final String KEY_TOP_25 = "TOP_25";
     public static final String KEY_TOTAL_TIME = "TOTAL_TIME";
     public static final String KEY_TOTAL_COST = "TOTAL_COST";
     public static final String KEY_TOTAL_VOLUME = "TOTAL_VOLUME";
@@ -112,11 +110,13 @@ public class MainActivity extends AppCompatActivity {
     public static final String KEY_IS_INTERVAL_ALERTS = "IS_INTERVAL ALERTS";
     public static final String KEY_ALERT_FREQUENCY = "ALERT_FREQUENCY";
     public static final String KEY_VIBRATE = "VIBRATE";
+    public static final String KEY_DATA_SHARED = "DATA_SHARED";
 
     //settings
     private boolean isDarkMode = false;
     private boolean isIntervalAlertsOn = true;
     private boolean isVibrateEnabled = false;
+    private boolean isDataShared = false;
     private long alertFrequencySeconds = 300;
 
     //cache
@@ -148,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             documentReference = db.collection("Users").document(currentUser.getEmail()); //refers to document with user's shower list
+            leaderboardReference = db.collection("Leaderboards").document("Top 25 Users");
             loadUserShowersFromFireStore();
             loadUserLifetimeStatsFromFireStore();
             loadUserDisplayName();
@@ -155,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
             loadCache();
             loadSettings(); //load device setting information
             loadSettingsFromFirestore(); //load firestore account settings information
+            loadLeaderboards();
 
             //location
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -237,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void logOut(){
+
         saveSettingsToFirestore();
 
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
@@ -499,6 +502,7 @@ public class MainActivity extends AppCompatActivity {
         editor.putBoolean(KEY_DARK_MODE, isDarkMode);
         editor.putBoolean(KEY_IS_INTERVAL_ALERTS, isIntervalAlertsOn);
         editor.putBoolean(KEY_VIBRATE, isVibrateEnabled);
+//        editor.putBoolean(KEY_DATA_SHARED, isDataShared);
         editor.putLong(KEY_ALERT_FREQUENCY, alertFrequencySeconds);
 
         if (isUserAnon()){
@@ -514,6 +518,7 @@ public class MainActivity extends AppCompatActivity {
         saveToFireStore(KEY_DARK_MODE, isDarkMode);
         saveToFireStore(KEY_IS_INTERVAL_ALERTS, isIntervalAlertsOn);
         saveToFireStore(KEY_VIBRATE, isVibrateEnabled);
+        saveToFireStore(KEY_DATA_SHARED, isDataShared);
         saveToFireStore(KEY_ALERT_FREQUENCY, alertFrequencySeconds);
     }
 
@@ -525,6 +530,7 @@ public class MainActivity extends AppCompatActivity {
         isDarkMode = sharedPreferences.getBoolean(KEY_DARK_MODE, false);
         isIntervalAlertsOn = sharedPreferences.getBoolean(KEY_IS_INTERVAL_ALERTS, true);
         isVibrateEnabled = sharedPreferences.getBoolean(KEY_VIBRATE, false);
+//        isDataShared = sharedPreferences.getBoolean(KEY_DATA_SHARED, false);
         alertFrequencySeconds = sharedPreferences.getLong(KEY_ALERT_FREQUENCY, 300);
 
         if (isUserAnon()){
@@ -547,11 +553,48 @@ public class MainActivity extends AppCompatActivity {
                             isVibrateEnabled = documentSnapshot.getBoolean(KEY_VIBRATE);
                             alertFrequencySeconds = documentSnapshot.getLong(KEY_ALERT_FREQUENCY);
 
+                            if (documentSnapshot.getBoolean(KEY_DATA_SHARED) != null){
+                                isDataShared = documentSnapshot.getBoolean(KEY_DATA_SHARED);
+                            }
+
                             saveSettings();
                         }
                     }
                 });
 
+    }
+
+    public boolean saveLeaderboards(){
+        if (isNetworkConnected()) { //will only attempt to save if network is connected
+
+            for (int i = 0; i < top25Users.size(); i++){
+                top25Users.get(i).setPosition(i + 1);
+            }
+
+            top25UsersJson = gson.toJson(top25Users); //convert user list to storable format
+
+            Map<String, Object> note = new HashMap<>();
+            note.put(KEY_TOP_25, top25UsersJson);
+
+            leaderboardReference.set(note);
+            return isNetworkConnected();
+        }
+        else
+            return isNetworkConnected();
+    }
+
+    public void loadLeaderboards(){
+        leaderboardReference.get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        if (documentSnapshot.getString(KEY_TOP_25) != null){
+                            Type typeList = new TypeToken<ArrayList<ShowerlyUser>>() {
+                            }.getType();
+                            top25Users = gson.fromJson(documentSnapshot.getString(KEY_TOP_25), typeList);
+                        }
+                    }
+                });
     }
 
     public void playAlertSound(int ALERT_ID){
@@ -582,7 +625,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         else if (ContextCompat.checkSelfPermission(this, Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED){
-            Toast.makeText(this, "Vibrate permission not granted", Toast.LENGTH_SHORT);
+            Toast.makeText(this, "Vibrate permission not granted", Toast.LENGTH_SHORT).show();
         }
     }
     //use to replace current fragment with new
@@ -787,11 +830,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public String getEmail() {
-        return email;
+        return currentUser.getEmail();
     }
 
     public String getDisplayName() {
-        return displayName;
+        return currentUser.getDisplayName();
     }
 
     public ArrayList<Shower> getUserShowersCache() {
@@ -928,6 +971,61 @@ public class MainActivity extends AppCompatActivity {
 
     public void setSettingsChanged(boolean settingsChanged) {
         this.settingsChanged = settingsChanged;
+    }
+
+    public ArrayList<ShowerlyUser> getTop25Users() {
+        return top25Users;
+    }
+
+    public void setTop25Users(ArrayList<ShowerlyUser> top25Users) {
+        this.top25Users = top25Users;
+    }
+
+    public boolean addUser(ShowerlyUser user){ //awful terrible ugly
+        for (ShowerlyUser u : top25Users){ //don't readd users if they're already there
+            if (u.equals(user)){
+                return false;
+            }
+        }
+
+        if (user.getAvgShowerLength() > 0) {
+            if (top25Users.size() > 1) {
+                int index = 0;
+                for (int i = top25Users.size() - 1; i >= 0; i--) {
+                    if (user.getAvgShowerLength() < top25Users.get(i).getAvgShowerLength()) {
+                        index = i;
+                    }
+
+                }
+                top25Users.add(index, user);
+            } else if (top25Users.size() == 1) {
+                if (user.getAvgShowerLength() < top25Users.get(0).getAvgShowerLength()) {
+                    top25Users.add(0, user);
+                } else {
+                    top25Users.add(user);
+                }
+            } else if (top25Users.size() == 0) {
+                top25Users.add(user);
+            } else {
+                Toast.makeText(this, "Must set display name in settings in order to access share showers.", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+
+            if (top25Users.size() > 25) {
+                top25Users.remove(top25Users.size() - 1);
+
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isDataShared() {
+        return isDataShared;
+    }
+
+    public void setDataShared(boolean dataShared) {
+        isDataShared = dataShared;
     }
 }
 

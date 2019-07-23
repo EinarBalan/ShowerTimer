@@ -10,7 +10,6 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -314,6 +313,22 @@ public class HomeFragment extends Fragment {
                     mainActivity.saveToFireStore(KEY_TOTAL_TIME, mainActivity.getTotalTimeMinutes(), KEY_TOTAL_COST, mainActivity.getTotalCost(), KEY_TOTAL_VOLUME, mainActivity.getTotalVolume(), KEY_AVG_SHOWER_LEN, mainActivity.calculateAvgShowerLengthMinutes());
                     mainActivity.loadCache();
                     updateCachedText();
+
+                    for (int i = 0; i < mainActivity.getTop25Users().size(); i++){ //update leaderboards with new avg time
+                        ShowerlyUser currentUser = new ShowerlyUser(mainActivity.getEmail(), mainActivity.getDisplayName(), mainActivity.getAvgShowerLengthMinutes());
+                        if (currentUser.equals(mainActivity.getTop25Users().get(i))){
+                            mainActivity.getTop25Users().set(i, currentUser);
+
+                            if (currentUser.getAvgShowerLength() < mainActivity.getTop25Users().get(i - 1).getAvgShowerLength()){ //reorder leaderboards if there are changes
+                                ShowerlyUser tempUser = mainActivity.getTop25Users().get(i - 1);
+                                mainActivity.getTop25Users().set(i - 1, currentUser);
+                                mainActivity.getTop25Users().set(i, tempUser);
+                            }
+                            break;
+                        }
+                    }
+                    mainActivity.saveLeaderboards();
+
                     new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
                         @Override
                         public void run() {

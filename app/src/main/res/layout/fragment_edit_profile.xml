@@ -6,161 +6,275 @@
     android:layout_height="match_parent"
     tools:context=".EditProfileFragment">
 
-    <android.support.constraint.ConstraintLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
-            android:id="@+id/linearLayout"
+        <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/colorWindowBackground"
-            android:orientation="vertical"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:visibility="visible">
+            android:layout_height="wrap_content">
 
-            <android.support.v7.widget.CardView
-                android:id="@+id/toolbar"
+            <LinearLayout
+                android:id="@+id/linearLayout"
                 android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:visibility="visible"
-                app:cardBackgroundColor="?attr/colorCardBackground"
-                app:cardCornerRadius="0dp"
-                app:cardElevation="2dp"
+                android:layout_height="wrap_content"
+                android:background="?attr/colorWindowBackground"
+                android:orientation="vertical"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:visibility="visible">
 
-                <android.support.constraint.ConstraintLayout
+                <android.support.v7.widget.CardView
+                    android:id="@+id/toolbar"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="?attr/actionBarSize"
+                    android:visibility="visible"
+                    app:cardBackgroundColor="?attr/colorCardBackground"
+                    app:cardCornerRadius="0dp"
+                    app:cardElevation="2dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:visibility="visible">
 
-                    <ImageButton
-                        android:id="@+id/buttonSettings"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginEnd="12dp"
-                        android:layout_marginBottom="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:scaleX="1"
-                        android:scaleY="1"
-                        android:src="@drawable/ic_setting_unfilled_thick"
-                        android:tint="?attr/colorPrimaryDark"
-                        android:visibility="visible"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                    <android.support.constraint.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
 
-                    <ImageButton
-                        android:id="@+id/buttonBack"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:scaleX="1.2"
-                        android:scaleY="1.2"
-                        android:src="@drawable/ic_back_24dp"
-                        android:tint="?attr/colorPrimaryDark"
-                        android:visibility="visible"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="@+id/headerText"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        <ImageButton
+                            android:id="@+id/buttonSettings"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginEnd="12dp"
+                            android:layout_marginBottom="8dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:scaleX="1"
+                            android:scaleY="1"
+                            android:src="@drawable/ic_setting_unfilled_thick"
+                            android:tint="?attr/colorPrimaryDark"
+                            android:visibility="visible"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
 
-                    <TextView
-                        android:id="@+id/headerText"
-                        style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif"
-                        android:text="Edit Profile"
-                        android:textAlignment="center"
-                        android:textAllCaps="false"
-                        android:textColor="?attr/colorDarkText"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:visibility="visible"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-                </android.support.constraint.ConstraintLayout>
-            </android.support.v7.widget.CardView>
+                        <ImageButton
+                            android:id="@+id/buttonBack"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginBottom="8dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:scaleX="1.2"
+                            android:scaleY="1.2"
+                            android:src="@drawable/ic_back_24dp"
+                            android:tint="?attr/colorPrimaryDark"
+                            android:visibility="visible"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="@+id/headerText"
+                            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginTop="32dp"
-                android:layout_marginBottom="2dp"
-                android:text="Info"
-                android:textAllCaps="true"
-                android:textColor="?attr/colorLightText"
-                android:textSize="12sp" />
+                        <TextView
+                            android:id="@+id/headerText"
+                            style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:text="Edit Profile"
+                            android:textAlignment="center"
+                            android:textAllCaps="false"
+                            android:textColor="?attr/colorDarkText"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:visibility="visible"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </android.support.constraint.ConstraintLayout>
+                </android.support.v7.widget.CardView>
 
-            <android.support.v7.widget.CardView
-                android:id="@+id/cardAudio"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
-                app:cardBackgroundColor="?attr/colorCardBackground"
-                app:cardElevation="1dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/toolbar">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginTop="32dp"
+                    android:layout_marginBottom="2dp"
+                    android:text="Info"
+                    android:textAllCaps="true"
+                    android:textColor="?attr/colorLightText"
+                    android:textSize="12sp" />
 
-                <LinearLayout
+                <android.support.v7.widget.CardView
+                    android:id="@+id/cardAudio"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">>
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="0dp"
+                    app:cardBackgroundColor="?attr/colorCardBackground"
+                    app:cardElevation="1dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="horizontal"
-                        android:paddingLeft="16dp"
-                        android:paddingTop="16dp"
-                        android:paddingRight="16dp"
-                        android:paddingBottom="16dp">
+                        android:orientation="vertical">>
 
-                        <TextView
-                            android:id="@+id/textView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Display Name"
-                            android:textColor="?attr/colorDarkText"
-                            android:textSize="16sp" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal"
+                            android:paddingLeft="16dp"
+                            android:paddingTop="16dp"
+                            android:paddingRight="16dp"
+                            android:paddingBottom="16dp">
 
-                        <EditText
-                            android:id="@+id/editTextDisplayName"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:background="@null"
-                            android:ems="10"
-                            android:hint="Add name"
-                            android:inputType="text"
-                            android:maxLength="24"
-                            android:selectAllOnFocus="true"
-                            android:textAlignment="viewEnd"
-                            android:textColor="?attr/colorLightText"
-                            android:textColorHint="?attr/colorLightText"
-                            android:textSize="16sp"
-                            tools:layout_editor_absoluteX="235dp" />
+                            <TextView
+                                android:id="@+id/textView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Display Name"
+                                android:textColor="?attr/colorDarkText"
+                                android:textSize="16sp" />
+
+                            <EditText
+                                android:id="@+id/editTextDisplayName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:background="@null"
+                                android:ems="10"
+                                android:hint="Add name"
+                                android:inputType="text"
+                                android:maxLength="24"
+                                android:selectAllOnFocus="true"
+                                android:textAlignment="viewEnd"
+                                android:textColor="?attr/colorLightText"
+                                android:textColorHint="?attr/colorLightText"
+                                android:textSize="16sp"
+                                tools:layout_editor_absoluteX="235dp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:theme="@style/Divider"></View>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="horizontal"
+                                android:paddingLeft="16dp"
+                                android:paddingTop="16dp"
+                                android:paddingRight="16dp"
+                                android:paddingBottom="16dp">
+
+                                <TextView
+                                    android:id="@+id/textViewVibrations"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Goal Time"
+                                    android:textColor="?attr/colorDarkText"
+                                    android:textSize="16sp" />
+
+                                <EditText
+                                    android:id="@+id/editTextGoalTime"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:background="@null"
+                                    android:ems="10"
+                                    android:hint="0m 00s"
+                                    android:inputType="number"
+                                    android:maxLength="7"
+                                    android:selectAllOnFocus="true"
+                                    android:text="10m 00s"
+                                    android:textAlignment="viewEnd"
+                                    android:textColor="?attr/colorLightText"
+                                    android:textColorHint="?attr/colorLightText"
+                                    android:textSize="16sp"
+                                    tools:layout_editor_absoluteX="235dp" />
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:theme="@style/Divider"></View>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal"
+                            android:paddingLeft="16dp"
+                            android:paddingTop="16dp"
+                            android:paddingRight="16dp"
+                            android:paddingBottom="16dp">
+
+                            <TextView
+                                android:id="@+id/textViewDisplay"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="City"
+                                android:textColor="?attr/colorDarkText"
+                                android:textSize="16sp" />
+
+                            <TextView
+                                android:id="@+id/textViewAddCity"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight=".1"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:text="Add City"
+                                android:textAlignment="viewEnd"
+                                android:textAllCaps="false"
+                                android:textColor="?attr/colorPrimaryDark"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
                     </LinearLayout>
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:theme="@style/Divider"></View>
+                </android.support.v7.widget.CardView>
+
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginTop="32dp"
+                    android:layout_marginBottom="2dp"
+                    android:text="Password"
+                    android:textAllCaps="true"
+                    android:textColor="?attr/colorLightText"
+                    android:textSize="12sp" />
+
+                <android.support.v7.widget.CardView
+                    android:id="@+id/cardVisual"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="0dp"
+                    app:cardBackgroundColor="?attr/colorCardBackground"
+                    app:cardElevation="1dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -177,203 +291,94 @@
                             android:paddingBottom="16dp">
 
                             <TextView
-                                android:id="@+id/textViewVibrations"
+                                android:id="@+id/textViewDarkMode"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Goal Time"
+                                android:text="Change Password"
                                 android:textColor="?attr/colorDarkText"
                                 android:textSize="16sp" />
 
-                            <EditText
-                                android:id="@+id/editTextGoalTime"
+                            <TextView
+                                android:id="@+id/textViewSendEmail"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:background="@null"
-                                android:ems="10"
-                                android:hint="0m 00s"
-                                android:inputType="number"
-                                android:maxLength="7"
-                                android:selectAllOnFocus="true"
-                                android:text="10m 00s"
+                                android:layout_weight=".1"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:text="Send Email"
                                 android:textAlignment="viewEnd"
-                                android:textColor="?attr/colorLightText"
-                                android:textColorHint="?attr/colorLightText"
+                                android:textAllCaps="false"
+                                android:textColor="?attr/colorPrimaryDark"
                                 android:textSize="16sp"
-                                tools:layout_editor_absoluteX="235dp" />
+                                android:textStyle="bold" />
+
                         </LinearLayout>
 
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:theme="@style/Divider"></View>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="horizontal"
-                        android:paddingLeft="16dp"
-                        android:paddingTop="16dp"
-                        android:paddingRight="16dp"
-                        android:paddingBottom="16dp">
-
-                        <TextView
-                            android:id="@+id/textViewDisplay"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="City"
-                            android:textColor="?attr/colorDarkText"
-                            android:textSize="16sp" />
-
-                        <TextView
-                            android:id="@+id/textViewAddCity"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight=".1"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:text="Add City"
-                            android:textAlignment="viewEnd"
-                            android:textAllCaps="false"
-                            android:textColor="?attr/colorPrimaryDark"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:theme="@style/Divider"></View>
 
                     </LinearLayout>
 
-                </LinearLayout>
+                </android.support.v7.widget.CardView>
 
-            </android.support.v7.widget.CardView>
+            </LinearLayout>
 
-
-            <TextView
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginTop="32dp"
-                android:layout_marginBottom="2dp"
-                android:text="Password"
-                android:textAllCaps="true"
-                android:textColor="?attr/colorLightText"
-                android:textSize="12sp" />
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:indeterminateTint="?attr/colorPrimaryDark"
+                android:progressTint="?attr/colorPrimaryDark"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="@+id/linearLayout"
+                app:layout_constraintStart_toStartOf="@+id/linearLayout"
+                app:layout_constraintTop_toTopOf="parent" />
 
-            <android.support.v7.widget.CardView
-                android:id="@+id/cardVisual"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
-                app:cardBackgroundColor="?attr/colorCardBackground"
-                app:cardElevation="1dp"
+                android:layout_marginTop="32dp"
+                android:orientation="horizontal"
+                android:padding="0dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/toolbar">
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
+                <Button
+                    android:id="@+id/buttonApplyChanges"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/ripple_solid_primary"
+                    android:text="Apply"
+                    android:textAllCaps="false"
+                    android:textColor="?attr/colorCardBackground"
+                    android:textStyle="bold" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="horizontal"
-                        android:paddingLeft="16dp"
-                        android:paddingTop="16dp"
-                        android:paddingRight="16dp"
-                        android:paddingBottom="16dp">
+                <Button
+                    android:id="@+id/buttonLogOut"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/ripple_unfilled_primary"
+                    android:stateListAnimator="@null"
+                    android:text="Log Out"
+                    android:textAllCaps="false"
+                    android:textColor="?attr/colorPrimaryDark"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/textViewDarkMode"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Change Password"
-                            android:textColor="?attr/colorDarkText"
-                            android:textSize="16sp" />
-
-                        <TextView
-                            android:id="@+id/textViewSendEmail"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight=".1"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:text="Send Email"
-                            android:textAlignment="viewEnd"
-                            android:textAllCaps="false"
-                            android:textColor="?attr/colorPrimaryDark"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:theme="@style/Divider"></View>
-
-                </LinearLayout>
-
-            </android.support.v7.widget.CardView>
-
-        </LinearLayout>
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:indeterminateTint="?attr/colorPrimaryDark"
-            android:progressTint="?attr/colorPrimaryDark"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="@+id/linearLayout"
-            app:layout_constraintStart_toStartOf="@+id/linearLayout"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:orientation="horizontal"
-            android:padding="0dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/linearLayout">
-
-            <Button
-                android:id="@+id/buttonApplyChanges"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="8dp"
-                android:layout_marginRight="8dp"
-                android:layout_marginBottom="8dp"
-                android:layout_weight="1"
-                android:background="@drawable/ripple_solid_primary"
-                android:text="Apply"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorCardBackground"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/buttonLogOut"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="8dp"
-                android:layout_weight="1"
-                android:background="@drawable/ripple_unfilled_primary"
-                android:stateListAnimator="@null"
-                android:text="Log Out"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorPrimaryDark"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-    </android.support.constraint.ConstraintLayout>
+        </android.support.constraint.ConstraintLayout>
+    </ScrollView>
 
 </FrameLayout>

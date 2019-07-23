@@ -6,7 +6,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -14,7 +13,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,8 +24,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Locale;
-
-import io.opencensus.trace.propagation.TextFormat;
 
 
 /**
@@ -238,15 +234,16 @@ public class EditProfileFragment extends Fragment {
             Toast.makeText(getActivity(), "Goal time must be greater than 0 seconds.", Toast.LENGTH_SHORT).show();
         }
 
-        if (textViewAddCity.getText().toString() != "Add City" && textViewAddCity.getText().toString().length() > 0) {
+        if (!textViewAddCity.getText().toString().equals("Add City") && textViewAddCity.getText().toString().length() > 0) {
             mainActivity.saveToFireStore(MainActivity.KEY_CITY, textViewAddCity.getText().toString());
         }
 
 
-        if (mainActivity.getDisplayName() != editTextDisplayName.getText().toString() && editTextDisplayName.getText().toString().length() > 0) { //only apply if a different name is entered
+        if (!(mainActivity.getDisplayName() == editTextDisplayName.getText().toString()) && editTextDisplayName.getText().toString().length() > 0) { //only apply if a different name is entered
             mainActivity.setUserDisplayName(editTextDisplayName.getText().toString());
             mainActivity.loadUserDisplayName();
         }
+
 
         mainActivity.loadUserPreferencesFirebase();
 
