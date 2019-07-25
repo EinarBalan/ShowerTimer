@@ -1,6 +1,7 @@
 package com.balanstudios.showerly;
 
 import android.Manifest;
+import android.arch.lifecycle.Lifecycle;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.location.LocationManager;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.net.ConnectivityManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
@@ -22,7 +24,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.view.View;
@@ -51,51 +53,10 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
-    private BottomNavigationView mainNavBar;
-    private ProfileFragment profileFragment;
-    private HomeFragment homeFragment;
-    private LeaderboardsFragment leaderboardsFragment;
-    private FragmentManager fragmentManager;
-    long backPressedTime = 0;
-    private boolean settingsChanged = false;
-
-    //sound
-    private SoundPool soundPool;
-    public static int interval_end_ID;
-    public static int timer_end_ID;
-
-    //firebase and user data storage.
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUser currentUser;
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private DocumentReference documentReference;
-    private DocumentReference leaderboardReference;
-    private Gson gson = new Gson();
-    String userShowersJson = "";
-    String top25UsersJson = "";
-    private String email;
-    private String displayName;
-    private String city;
-
-    private ArrayList<Shower> userShowers = new ArrayList<>();
-    private ArrayList<ShowerlyUser> top25Users = new ArrayList<>();
-    private long goalTimeMillis = 600000;
-    private double totalCost = 0;
-    private double totalVolume = 0;
-    private double totalTimeMinutes = 0;
-    private double avgShowerLengthMinutes = 0;
-    private int numShowers = 0;
-    private int goalsMet = 0;
-
-    //location services
-    private double latitude = 0.0;
-    private double longitude = 0.0;
-    private Location network_loc = null, final_loc=null;
-    private LocationManager locationManager;
-
     //stats access keys
     public static final String KEY_USER_SHOWERS = "USER_SHOWERS";
     public static final String KEY_TOP_25 = "TOP_25";
+    public static final String KEY_LOCAL_TOP_25 = "LOCAL_TOP_25";
     public static final String KEY_TOTAL_TIME = "TOTAL_TIME";
     public static final String KEY_TOTAL_COST = "TOTAL_COST";
     public static final String KEY_TOTAL_VOLUME = "TOTAL_VOLUME";
@@ -111,16 +72,54 @@ public class MainActivity extends AppCompatActivity {
     public static final String KEY_ALERT_FREQUENCY = "ALERT_FREQUENCY";
     public static final String KEY_VIBRATE = "VIBRATE";
     public static final String KEY_DATA_SHARED = "DATA_SHARED";
-
+    //cache
+    public static final String SHARED_PREFS = "sharedPrefs";
+    public static int interval_end_ID;
+    public static int timer_end_ID;
+    long backPressedTime = 0;
+    String userShowersJson = "";
+    String top25UsersJson = "";
+    String localTop25UsersJson = "";
+    private BottomNavigationView mainNavBar;
+    private ProfileFragment profileFragment;
+    private HomeFragment homeFragment;
+    private LeaderboardsFragment leaderboardsFragment;
+    private FragmentManager fragmentManager;
+    private boolean settingsChanged = false;
+    //sound
+    private SoundPool soundPool;
+    //firebase and user data storage.
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUser currentUser;
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private DocumentReference documentReference;
+    private DocumentReference globalLeaderboardsReference;
+    private DocumentReference localLeaderboardsReference;
+    private Gson gson = new Gson();
+    private String email;
+    private String displayName;
+    private String city = "";
+    private ArrayList<Shower> userShowers = new ArrayList<>();
+    private ArrayList<ShowerlyUser> top25Users = new ArrayList<>();
+    private ArrayList<ShowerlyUser> localTop25Users = new ArrayList<>();
+    private long goalTimeMillis = 600000;
+    private double totalCost = 0;
+    private double totalVolume = 0;
+    private double totalTimeMinutes = 0;
+    private double avgShowerLengthMinutes = 0;
+    private int numShowers = 0;
+    private int goalsMet = 0;
+    //location services
+    private double latitude = 0.0;
+    private double longitude = 0.0;
+    private Location network_loc = null, final_loc = null;
+    private LocationManager locationManager;
     //settings
     private boolean isDarkMode = false;
     private boolean isIntervalAlertsOn = true;
     private boolean isVibrateEnabled = false;
     private boolean isDataShared = false;
     private long alertFrequencySeconds = 300;
-
-    //cache
-    public static final String SHARED_PREFS = "sharedPrefs";
     private ArrayList<Shower> userShowersCache = new ArrayList<>();
     private long goalTimeMillisCache = 600000;
     private double totalCostCache = 0;
@@ -136,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
         //firebase code
         firebaseAuth = FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
@@ -148,23 +148,24 @@ public class MainActivity extends AppCompatActivity {
             }
 
             documentReference = db.collection("Users").document(currentUser.getEmail()); //refers to document with user's shower list
-            leaderboardReference = db.collection("Leaderboards").document("Top 25 Users");
+            globalLeaderboardsReference = db.collection("Leaderboards").document("Top 25 Users");
+
             loadUserShowersFromFireStore();
             loadUserLifetimeStatsFromFireStore();
             loadUserDisplayName();
-            loadUserPreferencesFirebase(); //load edit profile information
+            loadUserPreferencesFirebase(); //loads leaderboards (because city info needed) and edit profile information
             loadCache();
             loadSettings(); //load device setting information
             loadSettingsFromFirestore(); //load firestore account settings information
-            loadLeaderboards();
+
+            //leaderboards are loaded from within loadUserPreferencesFirebase() to give time to load city info
 
             //location
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
             commonInit();
 
-        }
-        else {
+        } else {
             loadSettings();
             commonInit();
             mainNavBar.setVisibility(View.GONE);
@@ -173,14 +174,34 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+//    @Override
+//    protected void onPostResume() {
+//        Log.d("D", "Post Resume");
+//        super.onPostResume();
+//    }
+//
+//    @Override
+//    protected void onStart() {
+//        Log.d("D", "Start");
+//        super.onStart();
+//    }
+//
+//    @Override
+//    protected void onStop() {
+//        Log.d("D", "Stop");
+//        super.onStop();
+//    }
+
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        Log.d("D", "Destroy");
         soundPool.release();
         soundPool = null;
+        super.onDestroy();
     }
 
-    public void commonInit(){
+
+    public void commonInit() {
         //sound
         AudioAttributes audioAttributes = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
@@ -238,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void logOut(){
+    public void logOut() {
 
         saveSettingsToFirestore();
 
@@ -249,11 +270,12 @@ public class MainActivity extends AppCompatActivity {
         editor.clear().apply();
 
         Intent restart = new Intent(MainActivity.this, SplashActivity.class);
+        restart.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(restart);
         finish();
     }
 
-    public void logOutAnon(){
+    public void logOutAnon() {
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
@@ -265,19 +287,18 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
-    public void sendResetPasswordEmail(){
+    public void sendResetPasswordEmail() {
         firebaseAuth.sendPasswordResetEmail(email)
-        .addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if (task.isSuccessful()) {
-                    Toast.makeText(getApplicationContext(), "Sent reset link to email.", Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    Toast.makeText(getApplicationContext(), "Something went wrong.", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(getApplicationContext(), "Sent reset link to email.", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Something went wrong.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
     public boolean saveToFireStore(ArrayList<Shower> userShowers) {
@@ -290,8 +311,7 @@ public class MainActivity extends AppCompatActivity {
 
             documentReference.set(note, SetOptions.merge());
             return isNetworkConnected();
-        }
-        else
+        } else
             return isNetworkConnected();
     }
 
@@ -303,8 +323,7 @@ public class MainActivity extends AppCompatActivity {
 
             documentReference.set(note, SetOptions.merge());
             return isNetworkConnected();
-        }
-        else
+        } else
             return isNetworkConnected();
     }
 
@@ -316,8 +335,7 @@ public class MainActivity extends AppCompatActivity {
 
             documentReference.set(note, SetOptions.merge());
             return isNetworkConnected();
-        }
-        else
+        } else
             return isNetworkConnected();
     }
 
@@ -329,8 +347,7 @@ public class MainActivity extends AppCompatActivity {
 
             documentReference.set(note, SetOptions.merge());
             return isNetworkConnected();
-        }
-        else
+        } else
             return isNetworkConnected();
     }
 
@@ -342,8 +359,7 @@ public class MainActivity extends AppCompatActivity {
 
             documentReference.set(note, SetOptions.merge());
             return isNetworkConnected();
-        }
-        else
+        } else
             return isNetworkConnected();
     }
 
@@ -358,51 +374,50 @@ public class MainActivity extends AppCompatActivity {
 
             documentReference.set(note, SetOptions.merge());
             return isNetworkConnected();
-        }
-        else
+        } else
             return isNetworkConnected();
     }
 
-    public void loadUserShowersFromFireStore(){
-            documentReference.get()
-                    .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                        @Override
-                        public void onSuccess(DocumentSnapshot documentSnapshot) {
-                            if (documentSnapshot.exists()) {
-                                userShowersJson = documentSnapshot.getString(KEY_USER_SHOWERS);
-                                Type typeList = new TypeToken<ArrayList<Shower>>() {
-                                }.getType();
-                                userShowers = gson.fromJson(userShowersJson, typeList);
-                                if (userShowers == null){ //will be null if user is new
-                                    userShowers = new ArrayList<>();
-                                }
-
-                                numShowers = userShowers.size();
-                                goalsMet = 0;
-                                for (Shower shower : userShowers){
-                                    if (shower.isGoalMet()){
-                                        goalsMet++;
-                                    }
-                                }
-                                saveCache();
-                            }
-
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(getApplicationContext(), "Something went wrong when loading your showers!", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-    }
-
-    public void loadUserLifetimeStatsFromFireStore(){
+    public void loadUserShowersFromFireStore() {
         documentReference.get()
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
-                    if (documentSnapshot.getDouble(KEY_TOTAL_TIME) != null && documentSnapshot.getDouble(KEY_TOTAL_COST) != null && documentSnapshot.getDouble(KEY_TOTAL_VOLUME) != null && documentSnapshot.getDouble(KEY_AVG_SHOWER_LEN) != null) {
+                        if (documentSnapshot.exists()) {
+                            userShowersJson = documentSnapshot.getString(KEY_USER_SHOWERS);
+                            Type typeList = new TypeToken<ArrayList<Shower>>() {
+                            }.getType();
+                            userShowers = gson.fromJson(userShowersJson, typeList);
+                            if (userShowers == null) { //will be null if user is new
+                                userShowers = new ArrayList<>();
+                            }
+
+                            numShowers = userShowers.size();
+                            goalsMet = 0;
+                            for (Shower shower : userShowers) {
+                                if (shower.isGoalMet()) {
+                                    goalsMet++;
+                                }
+                            }
+                            saveCache();
+                        }
+
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(getApplicationContext(), "Something went wrong when loading your showers!", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    public void loadUserLifetimeStatsFromFireStore() {
+        documentReference.get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        if (documentSnapshot.getDouble(KEY_TOTAL_TIME) != null && documentSnapshot.getDouble(KEY_TOTAL_COST) != null && documentSnapshot.getDouble(KEY_TOTAL_VOLUME) != null && documentSnapshot.getDouble(KEY_AVG_SHOWER_LEN) != null) {
                             totalTimeMinutes = documentSnapshot.getDouble(KEY_TOTAL_TIME);
                             totalCost = documentSnapshot.getDouble(KEY_TOTAL_COST);
                             totalVolume = documentSnapshot.getDouble(KEY_TOTAL_VOLUME);
@@ -420,23 +435,24 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    public void loadUserPreferencesFirebase(){
+    public void loadUserPreferencesFirebase() {
         documentReference.get()
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        if (documentSnapshot.getLong(KEY_GOAL_TIME) != null){
+                        if (documentSnapshot.getLong(KEY_GOAL_TIME) != null) {
                             goalTimeMillis = documentSnapshot.getLong(KEY_GOAL_TIME);
                         }
-                        if (documentSnapshot.getString(KEY_CITY) != null){
+                        if (documentSnapshot.getString(KEY_CITY) != null) {
                             city = documentSnapshot.getString(KEY_CITY);
                         }
                         saveCache();
+                        loadLeaderboards();
                     }
                 });
     }
 
-    public void setUserDisplayName(String displayName){
+    public void setUserDisplayName(String displayName) {
         UserProfileChangeRequest profile = new UserProfileChangeRequest.Builder()
                 .setDisplayName(displayName)
                 .build();
@@ -445,11 +461,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void loadUserDisplayName(){
+    public void loadUserDisplayName() {
         displayName = currentUser.getDisplayName();
     }
 
-    public void saveCache(){ //only call after retrieving data from firebase
+    public void saveCache() { //only call after retrieving data from firebase
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
@@ -472,7 +488,7 @@ public class MainActivity extends AppCompatActivity {
         Type typeList = new TypeToken<ArrayList<Shower>>() {
         }.getType();
         userShowersCache = gson.fromJson(sharedPreferences.getString(KEY_USER_SHOWERS, ""), typeList);
-        if (userShowersCache == null){
+        if (userShowersCache == null) {
             userShowersCache = new ArrayList<>();
         }
 
@@ -486,14 +502,14 @@ public class MainActivity extends AppCompatActivity {
 
         numShowersCache = userShowersCache.size(); //Log.d("DEBUG", "" + userShowers); Log.d("DEBUG", numShowersCache + " " + numShowers);
         goalsMetCache = 0;
-        for (Shower shower : userShowersCache){
-            if (shower.isGoalMet()){
+        for (Shower shower : userShowersCache) {
+            if (shower.isGoalMet()) {
                 goalsMetCache++;
             }
         }
     }
 
-    public void saveSettings(){
+    public void saveSettings() {
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
@@ -505,14 +521,14 @@ public class MainActivity extends AppCompatActivity {
 //        editor.putBoolean(KEY_DATA_SHARED, isDataShared);
         editor.putLong(KEY_ALERT_FREQUENCY, alertFrequencySeconds);
 
-        if (isUserAnon()){
+        if (isUserAnon()) {
             editor.putLong(KEY_GOAL_TIME, goalTimeMillis);
         }
 
         editor.apply();
     }
 
-    public void saveSettingsToFirestore(){
+    public void saveSettingsToFirestore() {
         saveToFireStore(KEY_GPM, Shower.getGallonsPerMinute());
         saveToFireStore(KEY_DPG, Shower.getDollarsPerGallon());
         saveToFireStore(KEY_DARK_MODE, isDarkMode);
@@ -522,7 +538,7 @@ public class MainActivity extends AppCompatActivity {
         saveToFireStore(KEY_ALERT_FREQUENCY, alertFrequencySeconds);
     }
 
-    public void loadSettings(){
+    public void loadSettings() {
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
 
         Shower.setGallonsPerMinute(Double.longBitsToDouble(sharedPreferences.getLong(KEY_GPM, Double.doubleToLongBits(2.1))));
@@ -533,13 +549,13 @@ public class MainActivity extends AppCompatActivity {
 //        isDataShared = sharedPreferences.getBoolean(KEY_DATA_SHARED, false);
         alertFrequencySeconds = sharedPreferences.getLong(KEY_ALERT_FREQUENCY, 300);
 
-        if (isUserAnon()){
+        if (isUserAnon()) {
             goalTimeMillis = sharedPreferences.getLong(KEY_GOAL_TIME, 600000);
         }
 
     }
 
-    public void loadSettingsFromFirestore(){
+    public void loadSettingsFromFirestore() {
         documentReference.get()
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
@@ -553,7 +569,7 @@ public class MainActivity extends AppCompatActivity {
                             isVibrateEnabled = documentSnapshot.getBoolean(KEY_VIBRATE);
                             alertFrequencySeconds = documentSnapshot.getLong(KEY_ALERT_FREQUENCY);
 
-                            if (documentSnapshot.getBoolean(KEY_DATA_SHARED) != null){
+                            if (documentSnapshot.getBoolean(KEY_DATA_SHARED) != null) {
                                 isDataShared = documentSnapshot.getBoolean(KEY_DATA_SHARED);
                             }
 
@@ -564,10 +580,25 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public boolean saveLeaderboards(){
+    public boolean saveLeaderboards() {
         if (isNetworkConnected()) { //will only attempt to save if network is connected
 
-            for (int i = 0; i < top25Users.size(); i++){
+            if (city.length() > 0) { //save local leaderboards
+                localLeaderboardsReference = db.collection("Leaderboards").document(city);
+                for (int i = 0; i < localTop25Users.size(); i++) {
+                    localTop25Users.get(i).setPosition(i + 1);
+                }
+
+                localTop25UsersJson = gson.toJson(localTop25Users);
+
+                Map<String, Object> note = new HashMap<>();
+                note.put(KEY_LOCAL_TOP_25, localTop25UsersJson);
+
+                localLeaderboardsReference.set(note);
+
+            }
+
+            for (int i = 0; i < top25Users.size(); i++) {
                 top25Users.get(i).setPosition(i + 1);
             }
 
@@ -576,19 +607,35 @@ public class MainActivity extends AppCompatActivity {
             Map<String, Object> note = new HashMap<>();
             note.put(KEY_TOP_25, top25UsersJson);
 
-            leaderboardReference.set(note);
+            globalLeaderboardsReference.set(note);
             return isNetworkConnected();
-        }
-        else
+        } else
             return isNetworkConnected();
     }
 
-    public void loadLeaderboards(){
-        leaderboardReference.get()
+    public void loadLeaderboards() {
+        //load local
+        if (city.length() > 0) {
+            localLeaderboardsReference = db.collection("Leaderboards").document(city);
+            localLeaderboardsReference.get()
+                    .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                        @Override
+                        public void onSuccess(DocumentSnapshot documentSnapshot) {
+                            if (documentSnapshot.getString(KEY_LOCAL_TOP_25) != null) {
+                                Type typeList = new TypeToken<ArrayList<ShowerlyUser>>() {
+                                }.getType();
+                                localTop25Users = gson.fromJson(documentSnapshot.getString(KEY_LOCAL_TOP_25), typeList);
+//                                Log.d("D", "Post load:" + localTop25Users);
+                            }
+                        }
+                    });
+        }
+
+        globalLeaderboardsReference.get() //load global
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        if (documentSnapshot.getString(KEY_TOP_25) != null){
+                        if (documentSnapshot.getString(KEY_TOP_25) != null) {
                             Type typeList = new TypeToken<ArrayList<ShowerlyUser>>() {
                             }.getType();
                             top25Users = gson.fromJson(documentSnapshot.getString(KEY_TOP_25), typeList);
@@ -597,7 +644,7 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    public void playAlertSound(int ALERT_ID){
+    public void playAlertSound(int ALERT_ID) {
         soundPool.play(ALERT_ID, 1, 1, 0, 0, 1);
     }
 
@@ -623,14 +670,14 @@ public class MainActivity extends AppCompatActivity {
                     v.vibrate(pattern, -1);
                     break;
             }
-        }
-        else if (ContextCompat.checkSelfPermission(this, Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED){
+        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Vibrate permission not granted", Toast.LENGTH_SHORT).show();
         }
     }
+
     //use to replace current fragment with new
     public void setFragment(Fragment f) {
-        new Handler().post(new FragmentRunnable(fragmentManager, f){ //prevents initial response lag in navbar
+        new Handler().post(new FragmentRunnable(fragmentManager, f) { //prevents initial response lag in navbar
         });
 
     }
@@ -651,13 +698,13 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
     }
 
-    public BottomNavigationView getMainNavBar(){
+    public BottomNavigationView getMainNavBar() {
         return mainNavBar;
     }
 
     //prevents accidental exits by user if presses back
     public void onBackPressed() {
-        if (isSettingsChanged()){ //prevents user leaving without applying settings
+        if (isSettingsChanged()) { //prevents user leaving without applying settings
             new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DialogStyle))
                     .setTitle("Are you sure?")
                     .setMessage("Do you want to leave without applying your changes?")
@@ -675,8 +722,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     })
                     .create().show();
-        }
-        else {
+        } else {
             if (fragmentManager.getBackStackEntryCount() > 0) {
                 fragmentManager.popBackStack();
             } else if (backPressedTime + 2000 > System.currentTimeMillis()) {
@@ -689,7 +735,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void showAlertDialog(String title, String message, DialogInterface.OnClickListener positiveOnClickListener){
+    public void showAlertDialog(String title, String message, DialogInterface.OnClickListener positiveOnClickListener) {
         new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DialogStyle))
                 .setTitle(title)
                 .setMessage(message)
@@ -711,23 +757,22 @@ public class MainActivity extends AppCompatActivity {
 
     public double calculateAvgShowerLengthMinutes() {
         double sum = 0;
-        for (Shower shower: userShowers){
+        for (Shower shower : userShowers) {
             sum += shower.getShowerLengthMinutes();
         }
-        avgShowerLengthMinutes = sum / (double)(userShowers.size());
+        avgShowerLengthMinutes = sum / (double) (userShowers.size());
         return avgShowerLengthMinutes;
     }
 
-    public String findCity(){
+    public String findCity() {
         try {
             network_loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        }
-        catch (SecurityException e){
+        } catch (SecurityException e) {
             e.printStackTrace();
             Toast.makeText(getApplicationContext(), "Cannot find location. Permission rejection.", Toast.LENGTH_SHORT).show();
         }
 
-        if (network_loc != null){
+        if (network_loc != null) {
             final_loc = network_loc;
             latitude = final_loc.getLatitude();
             longitude = final_loc.getLongitude();
@@ -736,48 +781,45 @@ public class MainActivity extends AppCompatActivity {
         try {
             Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
             List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-            if (addresses != null){
-                if (addresses.size() > 0){
+            if (addresses != null) {
+                if (addresses.size() > 0) {
                     Toast.makeText(getApplicationContext(), "City found!", Toast.LENGTH_SHORT).show();
                     return addresses.get(0).getLocality();
                 }
             }
-        }
-        catch (Exception e){
+        } catch (Exception e) {
 
         }
         return "";
     }
 
-    public double getLatitude(){
+    public double getLatitude() {
         try {
             network_loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        }
-        catch (SecurityException e){
+        } catch (SecurityException e) {
             Toast.makeText(getApplicationContext(), "Cannot find location. Permission rejection.", Toast.LENGTH_SHORT).show();
         }
 
-        if (network_loc != null){
+        if (network_loc != null) {
             return network_loc.getLatitude();
         }
         return 0;
     }
 
-    public double getLongitude(){
+    public double getLongitude() {
         try {
             network_loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-        }
-        catch (SecurityException e){
+        } catch (SecurityException e) {
             Toast.makeText(getApplicationContext(), "Cannot find location. Permission rejection.", Toast.LENGTH_SHORT).show();
         }
 
-        if (network_loc != null){
+        if (network_loc != null) {
             return network_loc.getLongitude();
         }
         return 0;
     }
 
-    public  boolean isUserAnon(){
+    public boolean isUserAnon() {
         return firebaseAuth.getCurrentUser().isAnonymous();
     }
 
@@ -917,7 +959,7 @@ public class MainActivity extends AppCompatActivity {
         this.goalsMetCache = goalsMetCache;
     }
 
-    public String getCity(){
+    public String getCity() {
         return city;
     }
 
@@ -981,9 +1023,17 @@ public class MainActivity extends AppCompatActivity {
         this.top25Users = top25Users;
     }
 
-    public boolean addUser(ShowerlyUser user){ //awful terrible ugly
-        for (ShowerlyUser u : top25Users){ //don't readd users if they're already there
-            if (u.equals(user)){
+    public ArrayList<ShowerlyUser> getLocalTop25Users() {
+        return localTop25Users;
+    }
+
+    public void setLocalTop25Users(ArrayList<ShowerlyUser> localTop25Users) {
+        this.localTop25Users = localTop25Users;
+    }
+
+    public boolean addUserGlobal(ShowerlyUser user) { //awful terrible ugly
+        for (ShowerlyUser u : top25Users) { //don't read users if they're already there
+            if (u.equals(user)) {
                 return false;
             }
         }
@@ -1020,6 +1070,46 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+    public boolean addUserLocal(ShowerlyUser user) {
+        for (ShowerlyUser u : localTop25Users) { //don't read users if they're already there
+            if (u.equals(user)) {
+                return false;
+            }
+        }
+
+        if (user.getAvgShowerLength() > 0 && city.length() > 0) {
+            if (localTop25Users.size() > 1) {
+                int index = 0;
+                for (int i = localTop25Users.size() - 1; i >= 0; i--) {
+                    if (user.getAvgShowerLength() < localTop25Users.get(i).getAvgShowerLength()) {
+                        index = i;
+                    }
+
+                }
+                localTop25Users.add(index, user);
+            } else if (localTop25Users.size() == 1) {
+                if (user.getAvgShowerLength() < localTop25Users.get(0).getAvgShowerLength()) {
+                    localTop25Users.add(0, user);
+                } else {
+                    localTop25Users.add(user);
+                }
+            } else if (localTop25Users.size() == 0) {
+                localTop25Users.add(user);
+            } else {
+//                Toast.makeText(this, "Must set display name in settings in order to access share showers.", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+
+            if (localTop25Users.size() > 25) {
+                localTop25Users.remove(localTop25Users.size() - 1);
+
+            }
+            return true;
+        }
+        return false;
+    }
+    
+    
     public boolean isDataShared() {
         return isDataShared;
     }
@@ -1032,10 +1122,12 @@ public class MainActivity extends AppCompatActivity {
 class FragmentRunnable implements Runnable {
     FragmentManager fragmentManager;
     Fragment f;
+
     public FragmentRunnable(FragmentManager fm, Fragment f) {
         fragmentManager = fm;
         this.f = f;
     }
+
     @Override
     public void run() {
         fragmentManager.beginTransaction()

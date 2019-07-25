@@ -176,7 +176,11 @@ class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryViewHold
 
     @Override
     public int getItemCount() {
-        return userShowers.size();
+        if (userShowers.size() > 50)
+            return 50;
+        else {
+            return userShowers.size();
+        }
     }
 }
 

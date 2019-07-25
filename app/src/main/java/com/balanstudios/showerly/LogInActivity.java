@@ -65,6 +65,11 @@ public class LogInActivity extends AppCompatActivity {
                         logIn();
                     }
                     break;
+                case R.id.textViewPasswordHelp:
+                    Intent intent = new Intent(LogInActivity.this, RecoverAccountActivity.class);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                    break;
             }
         }
     };

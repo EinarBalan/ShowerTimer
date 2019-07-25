@@ -1,5 +1,7 @@
 package com.balanstudios.showerly;
 
+import java.util.Calendar;
+
 public class Shower {
 
     private long showerLengthMillis;
@@ -9,6 +11,8 @@ public class Shower {
     private double volume;
     private double cost;
     private String date;
+    private int dayOfMonth = 0;
+    private int monthNum = 0;
     private String time;
     private boolean goalMet;
 
@@ -18,6 +22,8 @@ public class Shower {
         volume = 0;
         cost = 0;
         date = "";
+        dayOfMonth = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
+        monthNum = Calendar.getInstance().get(Calendar.MONTH) + 1;
         time = "";
         goalMet = false;
     }
@@ -28,6 +34,8 @@ public class Shower {
         volume = calculateVolume(showerLengthMinutes);
         cost = calculateCost(volume);
         this.date = date;
+        dayOfMonth = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
+        monthNum = Calendar.getInstance().get(Calendar.MONTH) + 1;
         this.time = time;
         this.goalMet = goalMet;
     }
@@ -117,5 +125,21 @@ public class Shower {
 
     public static void setDollarsPerGallon(double dpg) {
         dollarsPerGallon = dpg;
+    }
+
+    public int getDayOfMonth() {
+        return dayOfMonth;
+    }
+
+    public void setDayOfMonth(int dayOfMonth) {
+        this.dayOfMonth = dayOfMonth;
+    }
+
+    public int getMonthNum() {
+        return monthNum;
+    }
+
+    public void setMonthNum(int monthNum) {
+        this.monthNum = monthNum;
     }
 }

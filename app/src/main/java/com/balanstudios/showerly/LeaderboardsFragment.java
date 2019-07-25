@@ -1,10 +1,18 @@
 package com.balanstudios.showerly;
 
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,10 +21,13 @@ import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -29,13 +40,10 @@ public class LeaderboardsFragment extends Fragment {
 
     private Handler handler = new Handler();
 
-    private RecyclerView leaderboardsRecycler;
-    private RecyclerView.Adapter leaderboardsAdapter;
-    private RecyclerView.LayoutManager leaderboardsLayoutManager;
-
-    private Button buttonAdd;
-    private TextView textViewAvgShowerLength;
-    private LinearLayout linearLayoutButton;
+    private SectionsPageAdapter SectionsPageAdapter;
+    private ViewPager viewPager;
+    private TabLayout tabLayout;
+    private ProgressBar progressBar;
 
     public LeaderboardsFragment() {
         // Required empty public constructor
@@ -50,20 +58,11 @@ public class LeaderboardsFragment extends Fragment {
 
         mainActivity = (MainActivity) getActivity();
 
-        leaderboardsRecycler = v.findViewById(R.id.recyclerViewLeaderboards);
-        new Thread(new LeaderboardsRecyclerRunnable(v)).start();
+        viewPager = v.findViewById(R.id.container);
+        tabLayout = v.findViewById(R.id.tabs);
+        progressBar = v.findViewById(R.id.progressBarLeaderboards);
 
-        buttonAdd = v.findViewById(R.id.buttonAdd); buttonAdd.setOnClickListener(onClickListener);
-        textViewAvgShowerLength = v.findViewById(R.id.textViewShortestAvgShower);
-        linearLayoutButton = v.findViewById(R.id.linearLayoutButton);
-
-        if (mainActivity.isDataShared()){
-            leaderboardsRecycler.setVisibility(View.VISIBLE);
-            leaderboardsRecycler.startAnimation(AnimationUtils.loadAnimation(mainActivity, R.anim.fade_in_button));
-            textViewAvgShowerLength.setVisibility(View.VISIBLE);
-            linearLayoutButton.setVisibility(View.GONE);
-        }
-
+        new Handler().post(new TabsLeaderboardsInitRunnable(mainActivity, SectionsPageAdapter, getChildFragmentManager(), viewPager, tabLayout, progressBar));
 
         return v;
     }
@@ -71,114 +70,113 @@ public class LeaderboardsFragment extends Fragment {
     View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-        switch (view.getId()){
-            case R.id.buttonAdd:
-                if (mainActivity.getDisplayName() != null && mainActivity.getDisplayName().length() > 0) {
-
-                    if (mainActivity.addUser(new ShowerlyUser(mainActivity.getEmail(), mainActivity.getDisplayName(), mainActivity.getAvgShowerLengthMinutes()))){
-                        mainActivity.setDataShared(true);
-                        mainActivity.saveSettings();
-                        mainActivity.saveSettingsToFirestore();
-
-                        mainActivity.saveLeaderboards();
-
-                        leaderboardsRecycler.setVisibility(View.VISIBLE);
-                        textViewAvgShowerLength.setVisibility(View.VISIBLE);
-                        linearLayoutButton.setVisibility(View.GONE);
-
-                        leaderboardsAdapter.notifyDataSetChanged();
-                    }
-
-                }
-
-                break;
-        }
+            switch (view.getId()) {
+//                case R.id.buttonAdd:
+//                    if (mainActivity.getDisplayName() != null && mainActivity.getDisplayName().length() > 0 && mainActivity.getUserShowers().size() > 0) {
+//
+//                        if (mainActivity.addUserGlobal(new ShowerlyUser(mainActivity.getEmail(), mainActivity.getDisplayName(), mainActivity.getAvgShowerLengthMinutes()))) {
+//                            mainActivity.setDataShared(true);
+//                            mainActivity.saveSettings();
+//                            mainActivity.saveSettingsToFirestore();
+//
+//                            mainActivity.saveLeaderboards();
+//
+//                            linearLayoutButton.setVisibility(View.GONE);
+//
+//                        }
+//
+//                    } else if (mainActivity.getDisplayName() == null || mainActivity.getDisplayName().length() == 0) {
+//                        Toast.makeText(mainActivity, "Must set display name to share your showers", Toast.LENGTH_SHORT).show();
+//                    } else if (mainActivity.getUserShowers().size() == 0) {
+//                        Toast.makeText(mainActivity, "No shower data available", Toast.LENGTH_SHORT).show();
+//                    }
+//
+//                    break;
+            }
         }
     };
 
-    class LeaderboardsRecyclerRunnable implements Runnable {
 
-        View v;
+    class SectionsPageAdapter extends FragmentPagerAdapter {
 
-        public LeaderboardsRecyclerRunnable(View v) {
-            this.v = v;
+        private final List<Fragment> fragmentList = new ArrayList<>();
+        private final List<String> fragmentTitleList = new ArrayList<>();
+
+        SectionsPageAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        public void addFragment(Fragment fragment, String title) {
+            fragmentList.add(fragment);
+            fragmentTitleList.add(title);
+        }
+
+        @Nullable
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return fragmentTitleList.get(position);
+        }
+
+        @Override
+        public Fragment getItem(int i) {
+            return fragmentList.get(i);
+        }
+
+        @Override
+        public int getCount() {
+            return fragmentList.size();
+        }
+    }
+
+    class TabsLeaderboardsInitRunnable implements Runnable {
+
+        Context context;
+        SectionsPageAdapter SectionsPageAdapter;
+        FragmentManager fragmentManager;
+        ViewPager viewPager;
+        TabLayout tabLayout;
+        ProgressBar progressBar;
+
+        public TabsLeaderboardsInitRunnable(Context context, SectionsPageAdapter SectionsPageAdapter, FragmentManager fragmentManager, ViewPager viewPager, TabLayout tabLayout, ProgressBar progressBar) {
+            this.context = context;
+            this.SectionsPageAdapter = SectionsPageAdapter;
+            this.fragmentManager = fragmentManager;
+            this.viewPager = viewPager;
+            this.tabLayout = tabLayout;
+            this.progressBar = progressBar;
         }
 
         @Override
         public void run() {
-            leaderboardsAdapter = new LeaderboardsAdapter(mainActivity.getTop25Users());
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    try {
+            SectionsPageAdapter = new SectionsPageAdapter(fragmentManager);
 
-                        leaderboardsRecycler.setHasFixedSize(false);
-                        leaderboardsLayoutManager = new LinearLayoutManager(getActivity());
+            setUpViewPager(viewPager);
+            tabLayout.setupWithViewPager(viewPager);
 
-                        leaderboardsRecycler.setLayoutManager(leaderboardsLayoutManager);
-                        leaderboardsRecycler.setAdapter(leaderboardsAdapter);
+            if (mainActivity.isDarkMode()){
+                tabLayout.setTabTextColors(ContextCompat.getColor(mainActivity, R.color.colorLightText), ContextCompat.getColor(mainActivity, R.color.colorDarkText));
+            }
 
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+            tabLayout.setVisibility(View.VISIBLE);
+            tabLayout.startAnimation(AnimationUtils.loadAnimation(context, R.anim.fade_in_button));
+            viewPager.setVisibility(View.VISIBLE);
+            viewPager.startAnimation(AnimationUtils.loadAnimation(context, R.anim.fade_in_button));
+            progressBar.setVisibility(View.GONE);
+
+        }
+
+        private void setUpViewPager(ViewPager viewPager) {
+            SectionsPageAdapter adapter = new SectionsPageAdapter(fragmentManager);
+            String city = mainActivity.getCity();
+            if (city.length() == 0){
+                city = "Local";
+            }
+            adapter.addFragment(new LocalLeaderboardsFragment(), city);
+            adapter.addFragment(new GlobalLeaderboardsFragment(), "Global");
+            viewPager.setAdapter(adapter);
         }
     }
-
 }
 
 
 
-class LeaderboardsAdapter extends RecyclerView.Adapter<LeaderboardsAdapter.LeaderboardsViewHolder>{
-
-    private ArrayList<ShowerlyUser> top25users;
-    private DecimalFormat timeFormat = new DecimalFormat("0");
-
-
-    LeaderboardsAdapter(ArrayList<ShowerlyUser> top25users) {
-        this.top25users = top25users;
-    }
-
-    public static class LeaderboardsViewHolder extends RecyclerView.ViewHolder {
-
-        public TextView textViewPos;
-        public TextView textViewDisplayName;
-        public TextView textViewAvgShowerLength;
-
-        public LeaderboardsViewHolder(@NonNull View itemView) {
-            super(itemView);
-            textViewPos = itemView.findViewById(R.id.textViewPos);
-            textViewDisplayName = itemView.findViewById(R.id.textViewDisplayName);
-            textViewAvgShowerLength = itemView.findViewById(R.id.textViewAvgShowerLength);
-        }
-    }
-
-    @NonNull
-    @Override
-    public LeaderboardsViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.view_leaderboard_user, viewGroup, false);
-        LeaderboardsViewHolder leaderboardsViewHolder = new LeaderboardsViewHolder(v);
-        return leaderboardsViewHolder;
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull LeaderboardsViewHolder leaderboardsViewHolder, int i) {
-        ShowerlyUser user = top25users.get(i);
-
-        leaderboardsViewHolder.textViewPos.setText("" + (i + 1));
-        leaderboardsViewHolder.textViewDisplayName.setText(user.getDisplayName());
-
-        String avgShowerLength = String.format(Locale.getDefault(), "%sm %ss",
-                (int)(user.getAvgShowerLength()),
-                timeFormat.format(user.getAvgShowerLength() % 1 * 60));
-
-        leaderboardsViewHolder.textViewAvgShowerLength.setText(avgShowerLength);
-    }
-
-    @Override
-    public int getItemCount() {
-        return top25users.size();
-    }
-}

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.CardView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,11 +19,16 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
 
 /**
- * A simple {@link Fragment} subclass.
+ * To anyone who may be reading this code: I'm sorry. It's pure spaghetti. But hey, it works! That's all that matters, right? Right???
  */
+
 public class ProfileCalendarFragment extends Fragment {
 
     private MainActivity mainActivity;
@@ -39,9 +45,24 @@ public class ProfileCalendarFragment extends Fragment {
     private CardView cardViewWeek;
 
     private TextView textViewNoShowerData;
+    private TextView textViewMonth;
+    private TextView textViewYear;
+
+    private Calendar calendar = Calendar.getInstance();
+    private SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM");
+    private SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
+    private String month;
+    private String year;
+    private String yearNum;
+    private String monthNum;
+    private int monthCode = Calendar.getInstance().get(Calendar.MONTH) + 1;
+
+    private static int dayOfMonth = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
 
     private boolean isWeekChartSelected = false;
     private boolean isMonthCartSelected = false;
+
+    private ArrayList<ArrayList<Double>> months = new ArrayList<>();
     
     public ProfileCalendarFragment() {
         // Required empty public constructor
@@ -64,9 +85,16 @@ public class ProfileCalendarFragment extends Fragment {
         cardViewWeek = v.findViewById(R.id.cardViewWeek);
 
         textViewNoShowerData = v.findViewById(R.id.textViewNoShowerData);
+        textViewMonth = v.findViewById(R.id.textViewMonth);
+        textViewYear = v.findViewById(R.id.textViewYear);
 
+        if (mainActivity.getUserShowers().size() > 0) {
+            yearNum = mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - 1).getDate().substring(mainActivity.getUserShowers().get(0).getDate().length() - 2);
+            monthNum = mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - 1).getDate().substring(0, 1);
+        }
         
         if (mainActivity.getUserShowers().size() > 0) { //only show graph if there are recorded showers
+
             textViewNoShowerData.setVisibility(View.GONE);
             chartWeek = v.findViewById(R.id.chartWeek);
             chartWeek.setDrawBarShadow(false);
@@ -86,6 +114,25 @@ public class ProfileCalendarFragment extends Fragment {
         }
         
         if (mainActivity.getUserShowers().size() > 7) { // only show month chart if it is significantly different from week chart
+
+            //separate showers based on their months
+            for (int i = 0; i < 12; i++){
+                months.add(new ArrayList<Double>());
+            }
+
+            for (int i = mainActivity.getUserShowers().size() - 1; i >= 0; i--){
+                Shower shower = mainActivity.getUserShowers().get(i);
+                String currentYear = shower.getDate().substring(shower.getDate().length() - 2);
+                String currentMonth = shower.getDate().substring(0, shower.getDate().indexOf("/"));
+
+                if (currentYear.equals(yearNum)) {
+                    months.get(Integer.parseInt(currentMonth) - 1).add(shower.getShowerLengthMinutes());
+                }
+                else {
+                    break;
+                }
+            }
+
             chartMonth = v.findViewById(R.id.chartMonth);
             chartMonth.setDrawBarShadow(false);
             chartMonth.setDrawValueAboveBar(false);
@@ -96,6 +143,10 @@ public class ProfileCalendarFragment extends Fragment {
             chartMonth.getDescription().setEnabled(false);
 //            chartMonth.setTouchEnabled(false);
             chartMonth.setOnClickListener(onClickListener);
+
+            month = monthFormat.format(calendar.getTime());
+            textViewMonth.setText(month + " - Monthly Trend");
+
             initMonthChart();
         }
         else {
@@ -103,16 +154,20 @@ public class ProfileCalendarFragment extends Fragment {
             cardViewMonth.setVisibility(View.GONE);
         }
 
-        if (mainActivity.getUserShowers().size() > 60) { // only show year chart if it is significantly different from month chart
+        if (mainActivity.getUserShowers().size() > 40) { // only show year chart if it is significantly different from month chart
             chartYear = v.findViewById(R.id.chartYear);
             chartYear.setDrawBarShadow(false);
             chartYear.setDrawValueAboveBar(false);
-            chartYear.setMaxVisibleValueCount(60);
+            chartYear.setMaxVisibleValueCount(12);
             chartYear.setPinchZoom(false);
             chartYear.setDrawGridBackground(true);
             chartYear.getDescription().setEnabled(false);
             chartYear.setTouchEnabled(false);
 //            chartYear.setOnClickListener(onClickListener);
+
+            year = yearFormat.format(calendar.getTime());
+            textViewYear.setText(year + " - Yearly Trend");
+
             initYearChart();
         }
         else {
@@ -129,6 +184,12 @@ public class ProfileCalendarFragment extends Fragment {
         switch (view.getId()){
             case R.id.chartWeek:
                 isWeekChartSelected = !isWeekChartSelected;
+                if (isWeekChartSelected){
+                    chartWeek.getData().setValueTextSize(10f);
+                }
+                else {
+                    chartWeek.getData().setValueTextSize(0f);
+                }
                 chartWeek.setDrawValueAboveBar(isWeekChartSelected);
                 break;
             case R.id.chartMonth:
@@ -150,15 +211,41 @@ public class ProfileCalendarFragment extends Fragment {
         ArrayList<BarEntry> weekEntries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
-        for (int i = 1; i < 8; i++) {
-            try {
-                weekEntries.add(new BarEntry(7-i, (float) mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getShowerLengthMinutes()));
-                labels.add(mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getDate());
-            }
-            catch (Exception e){
-                break;
+        double[] days = new double[7];
+        String[] dates = new String[7];
+        Arrays.fill(days, 0);
+        Arrays.fill(dates, "");
+
+
+        for (Shower s: mainActivity.getUserShowers()){
+//            Log.d("D", "Shower Day: " + s.getDayOfMonth() + " Current Day: " + dayOfMonth);
+            if (Math.abs(s.getDayOfMonth() - dayOfMonth) < 7 && s.getMonthNum() == monthCode){ //if shower is taken at most seven days from current day
+                days[6 - Math.abs(s.getDayOfMonth() - dayOfMonth)] += s.getShowerLengthMinutes();
+                dates[6 - Math.abs(s.getDayOfMonth() - dayOfMonth)] = s.getDate();
+
             }
         }
+
+        for (int i = 0; i < days.length; i++){
+            weekEntries.add(new BarEntry(i, (float) days[i]));
+        }
+
+        for (int i = 0; i < dates.length; i++){
+            if (dates[i].length() == 0){
+                dates[i] = monthCode + "/" + (dayOfMonth - 6 + i) + "/" + yearNum;
+            }
+            labels.add(dates[i]);
+        }
+
+//        for (int i = 1; i < 8; i++) {
+//            try {
+//                weekEntries.add(new BarEntry(7-i, (float) mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getShowerLengthMinutes()));
+//                labels.add(mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getDate());
+//            }
+//            catch (Exception e){
+//                break;
+//            }
+//        }
 
         BarDataSet barDataSet = new BarDataSet(weekEntries, "Minutes Spent Showering");
         ArrayList<Integer> colors = new ArrayList<>();
@@ -169,19 +256,22 @@ public class ProfileCalendarFragment extends Fragment {
         BarData data = new BarData(barDataSet);
         data.setHighlightEnabled(false);
         data.setValueTextColor(colors.get(0));
+        data.setValueTextSize(0f);
         data.setBarWidth(.9f);
 
 
         chartWeek.setData(data);
 
         chartWeek.getAxisRight().setEnabled(false);
+        chartWeek.getAxisLeft().setAxisMinimum(0f);
         XAxis xAxis = chartWeek.getXAxis();
-        xAxis.setValueFormatter(new XAxisFormatter(reverseArrayList(labels)));
+        xAxis.setValueFormatter(new XAxisFormatter(labels));
         xAxis.setPosition(XAxis.XAxisPosition.TOP);
 
         if (mainActivity.isDarkMode()){
             xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartWeek.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
+            chartWeek.getAxisLeft().setSpaceBottom(0);
             chartWeek.getLegend().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartWeek.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.colorDarkBackground));
             chartWeek.setGridBackgroundColor(ContextCompat.getColor(mainActivity, R.color.headerTextColor));
@@ -196,12 +286,18 @@ public class ProfileCalendarFragment extends Fragment {
         for (int i = 1; i < 31; i++) {
             try {
                 monthEntries.add(new BarEntry(30 - i, (float) mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getShowerLengthMinutes()));
-//                labels.add("");
+                labels.add("");
             }
             catch (Exception e){
                 break;
             }
         }
+
+//        ArrayList<Double> currentMonth = months.get(Integer.parseInt(monthNum) - 1);
+//        for (double d: currentMonth){
+//            monthEntries.add(new BarEntry(Float.parseFloat(monthNum) - 1, (float) d));
+//        }
+
 
         BarDataSet barDataSet = new BarDataSet(monthEntries, "Minutes Spent Showering");
         ArrayList<Integer> colors = new ArrayList<>();
@@ -218,12 +314,14 @@ public class ProfileCalendarFragment extends Fragment {
         chartMonth.setData(data);
 
         chartMonth.getAxisRight().setEnabled(false);
+        chartMonth.getAxisLeft().setAxisMinimum(0f);
         XAxis xAxis = chartMonth.getXAxis();
         xAxis.setValueFormatter(new XAxisFormatterNone());
 
         if (mainActivity.isDarkMode()){
             xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartMonth.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
+            chartMonth.getAxisLeft().setSpaceBottom(0);
             chartMonth.getLegend().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartMonth.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.colorDarkBackground));
             chartMonth.setGridBackgroundColor(ContextCompat.getColor(mainActivity, R.color.headerTextColor));
@@ -234,17 +332,15 @@ public class ProfileCalendarFragment extends Fragment {
         ArrayList<BarEntry> yearEntries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
-        for (int i = 1; i < 366; i++) {
-            try {
-                yearEntries.add(new BarEntry(365 - i, (float) mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getShowerLengthMinutes()));
-//                labels.add("");
-            }
-            catch (Exception e){
-                break;
-            }
-        }
 
-        BarDataSet barDataSet = new BarDataSet(yearEntries, "Minutes Spent Showering");
+       for (int i = 1; i <= months.size(); i++){
+           if (months.get(i-1).size() > 0){
+               yearEntries.add(new BarEntry(i, getAverage(months.get(i-1)))); //add the average of each month to the graph, up to 12 months
+           }
+       }
+
+
+        BarDataSet barDataSet = new BarDataSet(yearEntries, "Average Minutes Spent Showering per Month");
         ArrayList<Integer> colors = new ArrayList<>();
         colors.add(ContextCompat.getColor(mainActivity, R.color.colorPrimaryDark));
         barDataSet.setColors(colors);
@@ -253,18 +349,20 @@ public class ProfileCalendarFragment extends Fragment {
         data.setHighlightEnabled(false);
         data.setValueTextColor(colors.get(0));
         data.setValueTextSize(0f);
-        data.setBarWidth(.025f);
+        data.setBarWidth(.65f);
 
 
         chartYear.setData(data);
 
         chartYear.getAxisRight().setEnabled(false);
+        chartYear.getAxisLeft().setAxisMinimum(0f);
         XAxis xAxis = chartYear.getXAxis();
         xAxis.setValueFormatter(new XAxisFormatterNone());
 
         if (mainActivity.isDarkMode()){
             xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartYear.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
+            chartYear.getAxisLeft().setSpaceBottom(0);
             chartYear.getLegend().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartYear.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.colorDarkBackground));
             chartYear.setGridBackgroundColor(ContextCompat.getColor(mainActivity, R.color.headerTextColor));
@@ -278,6 +376,15 @@ public class ProfileCalendarFragment extends Fragment {
         }
         return reversed;
     }
+
+    public float getAverage(ArrayList<Double> arrayList){
+        double sum = 0;
+        for (double num: arrayList){
+            sum += num;
+        }
+        return (float) (sum / arrayList.size());
+    }
+
 
 
 }

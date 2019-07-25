@@ -36,7 +36,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.39999998"
-        app:srcCompat="@drawable/ic_showerlyicon01" />
+        app:srcCompat="@drawable/ic_showerly_icon_rain_drop_standalone" />
 
     <TextView
         android:id="@+id/textView"

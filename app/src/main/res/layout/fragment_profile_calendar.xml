@@ -19,7 +19,8 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             android:text="No shower data."
-            android:textColor="?attr/colorLightText"
+            android:textColor="?attr/colorDarkText"
+            android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/nestedScrollView"
             app:layout_constraintStart_toStartOf="@+id/nestedScrollView"
@@ -70,7 +71,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="2dp"
                         android:layout_weight="1"
-                        android:text="7 Shower Trend"
+                        android:text="7 Day Trend"
                         android:textAlignment="center"
                         android:textColor="?attr/colorDarkText"
                         android:textSize="18sp" />
@@ -151,7 +152,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="2dp"
                         android:layout_weight="1"
-                        android:text="Monthly Trend"
+                        android:text="NAME Monthly Trend"
                         android:textAlignment="center"
                         android:textColor="?attr/colorDarkText"
                         android:textSize="18sp" />
@@ -232,7 +233,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="2dp"
                         android:layout_weight="1"
-                        android:text="Yearly Trend"
+                        android:text="YEAR Yearly Trend"
                         android:textAlignment="center"
                         android:textColor="?attr/colorDarkText"
                         android:textSize="18sp" />

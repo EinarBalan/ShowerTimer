@@ -11,8 +11,14 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.LegendEntry;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
@@ -47,6 +53,7 @@ public class ProfileStatsFragment extends Fragment {
     private Button buttonHistory;
 
     private PieChart pieChartGoal;
+    private BarChart chartLastShower;
 
     private DecimalFormat formatVolume = new DecimalFormat("0.0");
     private DecimalFormat formatCost = new DecimalFormat("0.00");
@@ -83,9 +90,12 @@ public class ProfileStatsFragment extends Fragment {
 
         buttonHistory = v.findViewById(R.id.buttonHistory); buttonHistory.setOnClickListener(onClickListener);
 
-        //pie chart init
+        //chart init
         pieChartGoal = v.findViewById(R.id.pieChartGoal);
         initPieChart();
+        chartLastShower = v.findViewById(R.id.chartLastShower);
+        initLastShowerChart();
+        
 
         updateLastShower();
         updateStats();
@@ -258,4 +268,56 @@ public class ProfileStatsFragment extends Fragment {
 
     }
 
+    public void initLastShowerChart(){
+        chartLastShower.setDrawBarShadow(false);
+        chartLastShower.setDrawValueAboveBar(false);
+        chartLastShower.setMaxVisibleValueCount(1);
+        chartLastShower.setPinchZoom(false);
+        chartLastShower.setScaleEnabled(false);
+        chartLastShower.setDrawGridBackground(true);
+        chartLastShower.getDescription().setEnabled(false);
+        
+        ArrayList<BarEntry> barEntries = new ArrayList<>();
+        ArrayList<String> labels = new ArrayList<>();
+        int count = 1;
+        if (mainActivity.getUserShowers().size() > 0) {
+            String date = mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - 1).getDate();
+            for (Shower s : mainActivity.getUserShowers()) {
+                if (s.getDate().equals(date)){
+                    barEntries.add(new BarEntry(count, (float) s.getShowerLengthMinutes()));
+                    labels.add(s.getTime());
+                    count++;
+                }
+            }
+        }
+
+        BarDataSet barDataSet = new BarDataSet(barEntries, "Minutes Spent Showering");
+        ArrayList<Integer> colors = new ArrayList<>();
+        colors.add(ContextCompat.getColor(mainActivity, R.color.colorPrimaryDark));
+        barDataSet.setColors(colors);
+
+        BarData data = new BarData(barDataSet);
+        data.setHighlightEnabled(false);
+        data.setValueTextColor(colors.get(0));
+        data.setValueTextSize(0f);
+        data.setBarWidth(.4f);
+        
+        chartLastShower.setData(data);
+        chartLastShower.getAxisRight().setEnabled(false);
+        chartLastShower.getAxisLeft().setAxisMinimum(0f);
+        chartLastShower.getAxisLeft().setSpaceBottom(0f);
+        XAxis xAxis = chartLastShower.getXAxis();
+        xAxis.setValueFormatter(new XAxisFormatterNone());
+        xAxis.setCenterAxisLabels(true);
+
+
+        if (mainActivity.isDarkMode()){
+            xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
+            chartLastShower.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
+            chartLastShower.getLegend().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
+            chartLastShower.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.colorDarkBackground));
+            chartLastShower.setGridBackgroundColor(ContextCompat.getColor(mainActivity, R.color.headerTextColor));
+        }
+    }
+    
 }

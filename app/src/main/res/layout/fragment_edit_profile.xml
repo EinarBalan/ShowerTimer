@@ -152,7 +152,7 @@
                                 android:ems="10"
                                 android:hint="Add name"
                                 android:inputType="text"
-                                android:maxLength="24"
+                                android:maxLength="16"
                                 android:selectAllOnFocus="true"
                                 android:textAlignment="viewEnd"
                                 android:textColor="?attr/colorLightText"

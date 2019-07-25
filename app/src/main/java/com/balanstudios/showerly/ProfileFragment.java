@@ -26,7 +26,7 @@ public class ProfileFragment extends Fragment {
 
     private MainActivity mainActivity;
 
-    private ProfileSectionsPageAdapter sectionsPageAdapter;
+    private ProfileSectionsPageAdapter profileSectionsPageAdapter;
     private ViewPager viewPager;
     private TabLayout tabLayout;
 
@@ -51,7 +51,7 @@ public class ProfileFragment extends Fragment {
 
         mainActivity = (MainActivity)getActivity();
 
-        sectionsPageAdapter = new ProfileSectionsPageAdapter(getChildFragmentManager());
+        profileSectionsPageAdapter = new ProfileSectionsPageAdapter(getChildFragmentManager());
 
         viewPager = v.findViewById(R.id.container);
         setUpViewPager(viewPager);

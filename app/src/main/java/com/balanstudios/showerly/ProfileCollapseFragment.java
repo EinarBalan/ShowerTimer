@@ -33,7 +33,7 @@ public class ProfileCollapseFragment extends Fragment {
 
     private MainActivity mainActivity;
 
-    private ProfileSectionsPageAdapter sectionsPageAdapter;
+    private ProfileSectionsPageAdapter profileSectionsPageAdapter;
     private ViewPager viewPager;
     private TabLayout tabLayout;
 
@@ -68,7 +68,7 @@ public class ProfileCollapseFragment extends Fragment {
 
         viewPager = v.findViewById(R.id.container);
         tabLayout = v.findViewById(R.id.tabs);
-        new Handler().post(new TabsInitRunnable(getActivity(), sectionsPageAdapter, getChildFragmentManager(), viewPager, tabLayout, progressBar)); //initialize tabs
+        new Handler().post(new TabsProfileInitRunnable(getActivity(), profileSectionsPageAdapter, getChildFragmentManager(), viewPager, tabLayout, progressBar)); //initialize tabs
 
 
         mainActivity.loadUserDisplayName();
@@ -160,18 +160,18 @@ class ProfileSectionsPageAdapter extends FragmentPagerAdapter {
 }
 
 
-class TabsInitRunnable implements Runnable {
+class TabsProfileInitRunnable implements Runnable {
 
     Context context;
-    ProfileSectionsPageAdapter sectionsPageAdapter;
+    ProfileSectionsPageAdapter profileSectionsPageAdapter;
     FragmentManager fragmentManager;
     ViewPager viewPager;
     TabLayout tabLayout;
     ProgressBar progressBar;
 
-     TabsInitRunnable(Context context, ProfileSectionsPageAdapter sectionsPageAdapter, FragmentManager fragmentManager, ViewPager viewPager, TabLayout tabLayout, ProgressBar progressBar) {
+     TabsProfileInitRunnable(Context context, ProfileSectionsPageAdapter profileSectionsPageAdapter, FragmentManager fragmentManager, ViewPager viewPager, TabLayout tabLayout, ProgressBar progressBar) {
         this.context = context;
-        this.sectionsPageAdapter = sectionsPageAdapter;
+        this.profileSectionsPageAdapter = profileSectionsPageAdapter;
         this.fragmentManager = fragmentManager;
         this.viewPager = viewPager;
         this.tabLayout = tabLayout;
@@ -180,7 +180,7 @@ class TabsInitRunnable implements Runnable {
 
     @Override
     public void run() {
-        sectionsPageAdapter = new ProfileSectionsPageAdapter(fragmentManager);
+        profileSectionsPageAdapter = new ProfileSectionsPageAdapter(fragmentManager);
 
 
         setUpViewPager(viewPager);

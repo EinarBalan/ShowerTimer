@@ -314,8 +314,8 @@ public class HomeFragment extends Fragment {
                     mainActivity.loadCache();
                     updateCachedText();
 
+                    ShowerlyUser currentUser = new ShowerlyUser(mainActivity.getEmail(), mainActivity.getDisplayName(), mainActivity.getAvgShowerLengthMinutes());
                     for (int i = 0; i < mainActivity.getTop25Users().size(); i++){ //update leaderboards with new avg time
-                        ShowerlyUser currentUser = new ShowerlyUser(mainActivity.getEmail(), mainActivity.getDisplayName(), mainActivity.getAvgShowerLengthMinutes());
                         if (currentUser.equals(mainActivity.getTop25Users().get(i))){
                             mainActivity.getTop25Users().set(i, currentUser);
 
@@ -325,6 +325,20 @@ public class HomeFragment extends Fragment {
                                 mainActivity.getTop25Users().set(i, tempUser);
                             }
                             break;
+                        }
+                    }
+                    if (mainActivity.getCity().length() > 0){
+                        for (int i = 0; i < mainActivity.getLocalTop25Users().size(); i++){ //update leaderboards with new avg time
+                            if (currentUser.equals(mainActivity.getLocalTop25Users().get(i))){
+                                mainActivity.getLocalTop25Users().set(i, currentUser);
+
+                                if (currentUser.getAvgShowerLength() < mainActivity.getLocalTop25Users().get(i - 1).getAvgShowerLength()){ //reorder leaderboards if there are changes
+                                    ShowerlyUser tempUser = mainActivity.getLocalTop25Users().get(i - 1);
+                                    mainActivity.getLocalTop25Users().set(i - 1, currentUser);
+                                    mainActivity.getLocalTop25Users().set(i, tempUser);
+                                }
+                                break;
+                            }
                         }
                     }
                     mainActivity.saveLeaderboards();

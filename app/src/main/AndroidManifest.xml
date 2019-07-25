@@ -5,23 +5,27 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.VIBRATE"/>
-
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/showerly_app_icon_two_tone"
+        android:icon="@mipmap/showerly_app_icon_rain_drop"
         android:label="Showerly"
-        android:roundIcon="@mipmap/showerly_app_icon_two_tone_round"
+        android:roundIcon="@mipmap/showerly_app_icon_rain_drop_round"
         android:supportsRtl="true"
         android:theme="@style/ShowerTimerLight">
-        <activity android:name=".SignUpActivity"
-            android:theme="@style/SplashTheme"
-            android:screenOrientation="portrait"></activity>
-        <activity android:name=".LogInActivity"
-            android:theme="@style/SplashTheme"
-            android:screenOrientation="portrait"></activity>
+        <activity android:name=".RecoverAccountActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/SplashTheme"></activity>
+        <activity
+            android:name=".SignUpActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/SplashTheme" />
+        <activity
+            android:name=".LogInActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/SplashTheme" />
         <activity
             android:name=".SplashActivity"
             android:screenOrientation="portrait"
