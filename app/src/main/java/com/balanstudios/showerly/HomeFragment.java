@@ -319,10 +319,19 @@ public class HomeFragment extends Fragment {
                         if (currentUser.equals(mainActivity.getTop25Users().get(i))){
                             mainActivity.getTop25Users().set(i, currentUser);
 
-                            if (currentUser.getAvgShowerLength() < mainActivity.getTop25Users().get(i - 1).getAvgShowerLength()){ //reorder leaderboards if there are changes
-                                ShowerlyUser tempUser = mainActivity.getTop25Users().get(i - 1);
-                                mainActivity.getTop25Users().set(i - 1, currentUser);
-                                mainActivity.getTop25Users().set(i, tempUser);
+                            if (i > 0 ) {
+                                if (currentUser.getAvgShowerLength() < mainActivity.getTop25Users().get(i - 1).getAvgShowerLength()) { //reorder leaderboards if there are changes
+                                    ShowerlyUser tempUser = mainActivity.getTop25Users().get(i - 1);
+                                    mainActivity.getTop25Users().set(i - 1, currentUser);
+                                    mainActivity.getTop25Users().set(i, tempUser);
+                                }
+                            }
+                            if (i < mainActivity.getTop25Users().size() - 1){
+                                if (currentUser.getAvgShowerLength() > mainActivity.getTop25Users().get(i + 1).getAvgShowerLength()){
+                                    ShowerlyUser tempUser = mainActivity.getTop25Users().get(i + 1);
+                                    mainActivity.getTop25Users().set(i + 1, currentUser);
+                                    mainActivity.getTop25Users().set(i, tempUser);
+                                }
                             }
                             break;
                         }
@@ -332,10 +341,19 @@ public class HomeFragment extends Fragment {
                             if (currentUser.equals(mainActivity.getLocalTop25Users().get(i))){
                                 mainActivity.getLocalTop25Users().set(i, currentUser);
 
-                                if (currentUser.getAvgShowerLength() < mainActivity.getLocalTop25Users().get(i - 1).getAvgShowerLength()){ //reorder leaderboards if there are changes
-                                    ShowerlyUser tempUser = mainActivity.getLocalTop25Users().get(i - 1);
-                                    mainActivity.getLocalTop25Users().set(i - 1, currentUser);
-                                    mainActivity.getLocalTop25Users().set(i, tempUser);
+                                if (i > 0) {
+                                    if (currentUser.getAvgShowerLength() < mainActivity.getLocalTop25Users().get(i - 1).getAvgShowerLength()) { //reorder leaderboards if there are changes
+                                        ShowerlyUser tempUser = mainActivity.getLocalTop25Users().get(i - 1);
+                                        mainActivity.getLocalTop25Users().set(i - 1, currentUser);
+                                        mainActivity.getLocalTop25Users().set(i, tempUser);
+                                    }
+                                }
+                                if (i < mainActivity.getLocalTop25Users().size() - 1){
+                                    if (currentUser.getAvgShowerLength() > mainActivity.getLocalTop25Users().get(i + 1).getAvgShowerLength()){
+                                        ShowerlyUser tempUser = mainActivity.getLocalTop25Users().get(i + 1);
+                                        mainActivity.getLocalTop25Users().set(i + 1, currentUser);
+                                        mainActivity.getLocalTop25Users().set(i, tempUser);
+                                    }
                                 }
                                 break;
                             }

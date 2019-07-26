@@ -860,9 +860,24 @@ public class MainActivity extends AppCompatActivity {
         showAlertDialog("Are You Sure?", "Deleting your account will completely remove all of your saved data and it cannot be undone. Proceed?", onClickListener);
     }
 
+    public void sortLowToHigh(ArrayList<ShowerlyUser> users){
+        ShowerlyUser tempUser;
+        for (int i = 0; i < users.size(); i++){
+            for (int j = i + 1; j < users.size() - 1; j++){
+                if (users.get(i).getAvgShowerLength() > users.get(j).getAvgShowerLength()){
+                    tempUser = users.get(j);
+                    users.set(j, users.get(i));
+                    users.set(i, tempUser);
+                }
+            }
+        }
+    }
+
     /*
     GETTERS AND SETTERS
     */
+
+
 
     public ArrayList<Shower> getUserShowers() {
         return userShowers;

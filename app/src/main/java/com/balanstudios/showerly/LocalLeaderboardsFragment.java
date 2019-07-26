@@ -67,6 +67,8 @@ public class LocalLeaderboardsFragment extends Fragment {
             mainActivity.saveSettings();
             mainActivity.saveSettingsToFirestore();
 
+            mainActivity.sortLowToHigh(mainActivity.getLocalTop25Users());
+
             mainActivity.saveLeaderboards();
 
         }

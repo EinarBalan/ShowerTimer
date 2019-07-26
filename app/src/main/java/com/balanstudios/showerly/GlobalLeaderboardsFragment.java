@@ -59,6 +59,8 @@ public class GlobalLeaderboardsFragment extends Fragment {
             mainActivity.saveSettings();
             mainActivity.saveSettingsToFirestore();
 
+            mainActivity.sortLowToHigh(mainActivity.getTop25Users());
+
             mainActivity.saveLeaderboards();
 
 
