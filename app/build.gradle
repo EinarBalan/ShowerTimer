@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.balanstudios.showerly"
-        minSdkVersion 23
+        minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -42,7 +42,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.2'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
-
+    implementation 'com.github.hotchemi:android-rate:1.0.1'
 }
 
 apply plugin: 'com.google.gms.google-services'

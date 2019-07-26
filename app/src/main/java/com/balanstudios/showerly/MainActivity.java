@@ -53,6 +53,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import hotchemi.android.rate.AppRate;
+
 public class MainActivity extends AppCompatActivity {
 
     //stats access keys
@@ -258,6 +260,13 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        AppRate.with(this) //ask if user wants to rate app
+                .setInstallDays(10)
+                .setLaunchTimes(7)
+                .setRemindInterval(5)
+                .monitor();
+        AppRate.showRateDialogIfMeetsConditions(this);
     }
 
     public void logOut() {

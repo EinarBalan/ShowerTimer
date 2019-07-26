@@ -7,4 +7,9 @@
     <string name="splash_emoji">&#128166;</string>
     <string name="wave_emoji">>&#127754;</string>
     <string name="world_emoji">>&#127759;</string>
+    <string name="rate_dialog_title">Enjoying Showerly?</string>
+    <string name="rate_dialog_message">Would you like to leave a rating? It helps out a lot!</string>
+    <string name="rate_dialog_ok">Rate</string>
+    <string name="rate_dialog_cancel">Remind Me Later</string>
+    <string name="rate_dialog_no">No, Thanks</string>
 </resources>
