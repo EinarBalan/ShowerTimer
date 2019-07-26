@@ -2,12 +2,15 @@ package com.balanstudios.showerly;
 
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -15,9 +18,13 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import java.net.URL;
 
 
 /**
@@ -28,6 +35,7 @@ public class SettingsFragment extends Fragment {
     private MainActivity mainActivity;
 
     private ImageButton buttonBack;
+    private ImageButton buttonMore;
     private Button buttonApply;
     private Button buttonLogIn;
     private Button buttonDeleteAccount;
@@ -47,6 +55,8 @@ public class SettingsFragment extends Fragment {
     private LinearLayout linearLayoutGoal;
     private View dividerAlert;
 
+    private TextView textViewPrivacyPolicy;
+
     public SettingsFragment() {
         // Required empty public constructor
     }
@@ -64,6 +74,7 @@ public class SettingsFragment extends Fragment {
 
 
         buttonBack = v.findViewById(R.id.buttonBack);  buttonBack.setOnClickListener(onClickListener);
+        buttonMore = v.findViewById(R.id.buttonMore); buttonMore.setOnClickListener(onClickListener);
         buttonApply = v.findViewById(R.id.buttonApplyChanges); buttonApply.setOnClickListener(onClickListener);
         buttonLogIn = v.findViewById(R.id.buttonLogIn); buttonLogIn.setOnClickListener(onClickListener);
         buttonDeleteAccount = v.findViewById(R.id.buttonDeleteAccount); buttonDeleteAccount.setOnClickListener(onClickListener);
@@ -81,6 +92,8 @@ public class SettingsFragment extends Fragment {
         switchVibrations = v.findViewById(R.id.switchVibrations); switchVibrations.setChecked(mainActivity.isVibrateEnabled()); switchVibrations.setOnCheckedChangeListener(onCheckedChangeListener);
         switchIntervalAlerts = v.findViewById(R.id.switchIntervalAlerts); switchIntervalAlerts.setChecked(mainActivity.isIntervalAlertsOn()); switchIntervalAlerts.setOnCheckedChangeListener(onCheckedChangeListener);
         switchDarkMode = v.findViewById(R.id.switchDarkMode); switchDarkMode.setChecked(mainActivity.isDarkMode());switchDarkMode.setOnCheckedChangeListener(onCheckedChangeListener);
+
+        textViewPrivacyPolicy = v.findViewById(R.id.textViewPrivacyPolicy); textViewPrivacyPolicy.setOnClickListener(onClickListener);
 
         linearLayoutAlertFrequency = v.findViewById(R.id.linearLayoutAlertFrequency);
         dividerAlert = v.findViewById(R.id.dividerAlert);
@@ -127,6 +140,38 @@ public class SettingsFragment extends Fragment {
                     break;
                 case R.id.buttonDeleteAccount:
                     mainActivity.deleteUser();
+                    break;
+                case R.id.buttonMore:
+                     PopupMenu menu = new PopupMenu(mainActivity, view);
+                     menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                         @Override
+                         public boolean onMenuItemClick(MenuItem menuItem) {
+                             switch (menuItem.getItemId()) {
+                                 case R.id.menuPrivacyPolicy:
+                                     try {
+                                         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://app.termly.io/document/privacy-policy/cf48d4b6-09ce-4631-83fe-b26d1e456a3d"));
+                                         startActivity(browserIntent);
+                                         return true;
+                                     } catch (Exception e) {
+                                         e.printStackTrace();
+                                         return false;
+                                     }
+                             }
+                             return false;
+                         }
+                     });
+                     MenuInflater inflater = menu.getMenuInflater();
+                     inflater.inflate(R.menu.menu_privacy_policy, menu.getMenu());
+                     menu.show();
+                     break;
+                case R.id.textViewPrivacyPolicy:
+                    try {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://app.termly.io/document/privacy-policy/cf48d4b6-09ce-4631-83fe-b26d1e456a3d"));
+                        startActivity(browserIntent);
+                    }
+                    catch (Exception e){
+                        e.printStackTrace();
+                    }
                     break;
             }
         }
