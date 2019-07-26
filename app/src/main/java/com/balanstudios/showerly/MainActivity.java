@@ -1,6 +1,7 @@
 package com.balanstudios.showerly;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.arch.lifecycle.Lifecycle;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -47,6 +48,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -194,7 +196,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        Log.d("D", "Destroy");
         soundPool.release();
         soundPool = null;
         super.onDestroy();
@@ -279,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
-        firebaseAuth.signOut();
+        firebaseAuth.getCurrentUser().delete();
         editor.clear().apply();
 
         Intent restart = new Intent(MainActivity.this, SplashActivity.class);
@@ -821,6 +822,42 @@ public class MainActivity extends AppCompatActivity {
 
     public boolean isUserAnon() {
         return firebaseAuth.getCurrentUser().isAnonymous();
+    }
+
+    public void deleteUser() {
+        DialogInterface.OnClickListener onClickListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+//                for (Iterator<ShowerlyUser> s = top25Users.iterator(); s.hasNext();){
+//                    if (s.equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes() ))){
+//                        s.remove();
+//                    }
+//                }
+//                for (Iterator<ShowerlyUser> s = localTop25Users.iterator(); s.hasNext();){
+//                    if (s.equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes() ))){
+//                        s.remove();
+//                    }
+//                }
+                saveLeaderboards();
+                db.collection("Users").document(email).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()){
+                            currentUser.delete();
+                            Intent restart = new Intent(MainActivity.this, SplashActivity.class);
+                            restart.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(restart);
+                            finish();
+                        }
+                        else {
+                            Toast.makeText(getApplicationContext(), "Something went wrong", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        };
+
+        showAlertDialog("Are You Sure?", "Deleting your account will completely remove all of your saved data and it cannot be undone. Proceed?", onClickListener);
     }
 
     /*

@@ -529,7 +529,6 @@
                     android:id="@+id/buttonLogIn"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="8dp"
                     android:layout_marginRight="8dp"
                     android:layout_marginBottom="8dp"
                     android:layout_weight="1"
@@ -540,6 +539,21 @@
                     android:textColor="?attr/colorPrimaryDark"
                     android:textStyle="bold"
                     android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/buttonDeleteAccount"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/ripple_unfilled_primary"
+                    android:stateListAnimator="@null"
+                    android:text="Delete Account"
+                    android:textAllCaps="false"
+                    android:textColor="?attr/colorPrimaryDark"
+                    android:textStyle="bold"
+                    android:visibility="visible" />
 
             </LinearLayout>
 

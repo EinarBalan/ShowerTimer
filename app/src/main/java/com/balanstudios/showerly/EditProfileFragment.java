@@ -196,7 +196,7 @@ public class EditProfileFragment extends Fragment {
 
             new AlertDialog.Builder(getActivity())
                     .setTitle("Permission Needed")
-                    .setMessage("Granting location permission gives you access to the leaderboards, which are ranked by city. Only the name of your city is stored. ")
+                    .setMessage("Granting location permission gives you access to the leaderboards, which are ranked by city. Your location will only be accessed once and only the name of your city is stored. ")
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {

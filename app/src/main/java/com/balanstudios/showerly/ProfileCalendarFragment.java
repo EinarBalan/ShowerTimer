@@ -5,8 +5,8 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.CardView;
-import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -18,8 +18,9 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.listener.ChartTouchListener;
+import com.github.mikephil.charting.listener.OnChartGestureListener;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,23 +32,21 @@ import java.util.Calendar;
 
 public class ProfileCalendarFragment extends Fragment {
 
+    private static int dayOfMonth = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
     private MainActivity mainActivity;
-
     private BarChart chartWeek;
     private BarChart chartMonth;
     private BarChart chartYear;
-    
     private LinearLayout linearLayoutYear;
     private CardView cardViewYear;
     private LinearLayout linearLayoutMonth;
     private CardView cardViewMonth;
     private LinearLayout linearLayoutWeek;
     private CardView cardViewWeek;
-
     private TextView textViewNoShowerData;
     private TextView textViewMonth;
     private TextView textViewYear;
-
+    private TextView textViewWeek;
     private Calendar calendar = Calendar.getInstance();
     private SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM");
     private SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
@@ -56,18 +55,49 @@ public class ProfileCalendarFragment extends Fragment {
     private String yearNum;
     private String monthNum;
     private int monthCode = Calendar.getInstance().get(Calendar.MONTH) + 1;
-
-    private static int dayOfMonth = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
-
     private boolean isWeekChartSelected = false;
-    private boolean isMonthCartSelected = false;
+    private boolean isMonthChartSelected = false;
+    View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            switch (view.getId()) {
+                case R.id.chartWeek:
+                    isWeekChartSelected = !isWeekChartSelected;
+                    if (isWeekChartSelected) {
+                        chartWeek.getData().setValueTextSize(10f);
+                    } else {
+                        chartWeek.getData().setValueTextSize(0f);
+                    }
+                    chartWeek.setDrawValueAboveBar(isWeekChartSelected);
+                    break;
+                case R.id.chartMonth:
+                    isMonthChartSelected = !isMonthChartSelected;
+                    if (isMonthChartSelected) {
+                        chartMonth.getData().setValueTextSize(6f);
+                    } else {
+                        chartMonth.getData().setValueTextSize(0f);
+                    }
+                    chartMonth.setDrawValueAboveBar(isMonthChartSelected);
+                    break;
 
+            }
+        }
+    };
+    private boolean isYearChartSelected = false;
     private ArrayList<ArrayList<Double>> months = new ArrayList<>();
-    
+
+
     public ProfileCalendarFragment() {
         // Required empty public constructor
     }
 
+    public static ArrayList<String> reverseArrayList(ArrayList<String> arrayList) {
+        ArrayList<String> reversed = new ArrayList<>();
+        for (int i = arrayList.size() - 1; i >= 0; i--) {
+            reversed.add(arrayList.get(i));
+        }
+        return reversed;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -76,7 +106,7 @@ public class ProfileCalendarFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_profile_calendar, container, false);
 
         mainActivity = (MainActivity) getActivity();
-        
+
         linearLayoutYear = v.findViewById(R.id.linearLayoutYear);
         cardViewYear = v.findViewById(R.id.cardViewYear);
         linearLayoutMonth = v.findViewById(R.id.linearLayoutMonth);
@@ -87,12 +117,13 @@ public class ProfileCalendarFragment extends Fragment {
         textViewNoShowerData = v.findViewById(R.id.textViewNoShowerData);
         textViewMonth = v.findViewById(R.id.textViewMonth);
         textViewYear = v.findViewById(R.id.textViewYear);
+        textViewWeek = v.findViewById(R.id.textViewWeek);
 
         if (mainActivity.getUserShowers().size() > 0) {
             yearNum = mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - 1).getDate().substring(mainActivity.getUserShowers().get(0).getDate().length() - 2);
             monthNum = mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - 1).getDate().substring(0, 1);
         }
-        
+
         if (mainActivity.getUserShowers().size() > 0) { //only show graph if there are recorded showers
 
             textViewNoShowerData.setVisibility(View.GONE);
@@ -105,30 +136,28 @@ public class ProfileCalendarFragment extends Fragment {
             chartWeek.setDrawGridBackground(true);
             chartWeek.getDescription().setEnabled(false);
 //            chartWeek.setTouchEnabled(false);
-            chartWeek.setOnClickListener(onClickListener);
+//            chartWeek.setOnClickListener(onClickListener);
             initWeekChart();
-        }
-        else {
+        } else {
             linearLayoutWeek.setVisibility(View.GONE);
             cardViewWeek.setVisibility(View.GONE);
         }
-        
+
         if (mainActivity.getUserShowers().size() > 7) { // only show month chart if it is significantly different from week chart
 
             //separate showers based on their months
-            for (int i = 0; i < 12; i++){
+            for (int i = 0; i < 12; i++) {
                 months.add(new ArrayList<Double>());
             }
 
-            for (int i = mainActivity.getUserShowers().size() - 1; i >= 0; i--){
+            for (int i = mainActivity.getUserShowers().size() - 1; i >= 0; i--) {
                 Shower shower = mainActivity.getUserShowers().get(i);
                 String currentYear = shower.getDate().substring(shower.getDate().length() - 2);
                 String currentMonth = shower.getDate().substring(0, shower.getDate().indexOf("/"));
 
                 if (currentYear.equals(yearNum)) {
                     months.get(Integer.parseInt(currentMonth) - 1).add(shower.getShowerLengthMinutes());
-                }
-                else {
+                } else {
                     break;
                 }
             }
@@ -142,14 +171,13 @@ public class ProfileCalendarFragment extends Fragment {
             chartMonth.setDrawGridBackground(true);
             chartMonth.getDescription().setEnabled(false);
 //            chartMonth.setTouchEnabled(false);
-            chartMonth.setOnClickListener(onClickListener);
+//            chartMonth.setOnClickListener(onClickListener);
 
             month = monthFormat.format(calendar.getTime());
             textViewMonth.setText(month + " - Monthly Trend");
 
             initMonthChart();
-        }
-        else {
+        } else {
             linearLayoutMonth.setVisibility(View.GONE);
             cardViewMonth.setVisibility(View.GONE);
         }
@@ -169,45 +197,66 @@ public class ProfileCalendarFragment extends Fragment {
             textViewYear.setText(year + " - Yearly Trend");
 
             initYearChart();
-        }
-        else {
+        } else {
             linearLayoutYear.setVisibility(View.GONE);
             cardViewYear.setVisibility(View.GONE);
         }
-        
+
         return v;
     }
 
-    View.OnClickListener onClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-        switch (view.getId()){
-            case R.id.chartWeek:
+    public void initWeekChart() {
+
+        chartWeek.setOnChartGestureListener(new OnChartGestureListener() {
+            @Override
+            public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+
+            }
+
+            @Override
+            public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+
+            }
+
+            @Override
+            public void onChartDoubleTapped(MotionEvent me) {
+
+            }
+
+            @Override
+            public void onChartSingleTapped(MotionEvent me) {
                 isWeekChartSelected = !isWeekChartSelected;
-                if (isWeekChartSelected){
+                if (isWeekChartSelected) {
                     chartWeek.getData().setValueTextSize(10f);
-                }
-                else {
+                } else {
                     chartWeek.getData().setValueTextSize(0f);
                 }
                 chartWeek.setDrawValueAboveBar(isWeekChartSelected);
-                break;
-            case R.id.chartMonth:
-                isMonthCartSelected = !isMonthCartSelected;
-                if (isMonthCartSelected){
-                    chartMonth.getData().setValueTextSize(6f);
-                }
-                else {
-                    chartMonth.getData().setValueTextSize(0f);
-                }
-                chartMonth.setDrawValueAboveBar(isMonthCartSelected);
-                break;
+            }
 
-        }
-        }
-    };
+            @Override
+            public void onChartFling(MotionEvent me1, MotionEvent me2, float velocityX, float velocityY) {
 
-    public void initWeekChart(){
+            }
+
+            @Override
+            public void onChartScale(MotionEvent me, float scaleX, float scaleY) {
+
+            }
+
+            @Override
+            public void onChartTranslate(MotionEvent me, float dX, float dY) {
+
+            }
+
+            @Override
+            public void onChartLongPressed(MotionEvent me) {
+
+            }
+
+
+        });
+
         ArrayList<BarEntry> weekEntries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
@@ -217,35 +266,28 @@ public class ProfileCalendarFragment extends Fragment {
         Arrays.fill(dates, "");
 
 
-        for (Shower s: mainActivity.getUserShowers()){
+        for (Shower s : mainActivity.getUserShowers()) {
 //            Log.d("D", "Shower Day: " + s.getDayOfMonth() + " Current Day: " + dayOfMonth);
-            if (Math.abs(s.getDayOfMonth() - dayOfMonth) < 7 && s.getMonthNum() == monthCode){ //if shower is taken at most seven days from current day
+            if (Math.abs(s.getDayOfMonth() - dayOfMonth) < 7 && s.getMonthNum() == monthCode) { //if shower is taken at most seven days from current day
                 days[6 - Math.abs(s.getDayOfMonth() - dayOfMonth)] += s.getShowerLengthMinutes();
-                dates[6 - Math.abs(s.getDayOfMonth() - dayOfMonth)] = s.getDate();
+                dates[6 - Math.abs(s.getDayOfMonth() - dayOfMonth)] = s.getDate().substring(0, s.getDate().length() - 3);
 
             }
         }
 
-        for (int i = 0; i < days.length; i++){
+
+        for (int i = 0; i < days.length; i++) {
             weekEntries.add(new BarEntry(i, (float) days[i]));
         }
 
-        for (int i = 0; i < dates.length; i++){
-            if (dates[i].length() == 0){
-                dates[i] = monthCode + "/" + (dayOfMonth - 6 + i) + "/" + yearNum;
+        for (int i = 0; i < dates.length; i++) {
+            if (dates[i].length() == 0) {
+                dates[i] = monthCode + "/" + (dayOfMonth - 6 + i);
             }
             labels.add(dates[i]);
         }
 
-//        for (int i = 1; i < 8; i++) {
-//            try {
-//                weekEntries.add(new BarEntry(7-i, (float) mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getShowerLengthMinutes()));
-//                labels.add(mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getDate());
-//            }
-//            catch (Exception e){
-//                break;
-//            }
-//        }
+        textViewWeek.setText(dates[0] + " to " + dates[6] + " - Weekly Trend");
 
         BarDataSet barDataSet = new BarDataSet(weekEntries, "Minutes Spent Showering");
         ArrayList<Integer> colors = new ArrayList<>();
@@ -268,7 +310,7 @@ public class ProfileCalendarFragment extends Fragment {
         xAxis.setValueFormatter(new XAxisFormatter(labels));
         xAxis.setPosition(XAxis.XAxisPosition.TOP);
 
-        if (mainActivity.isDarkMode()){
+        if (mainActivity.isDarkMode()) {
             xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartWeek.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartWeek.getAxisLeft().setSpaceBottom(0);
@@ -278,8 +320,58 @@ public class ProfileCalendarFragment extends Fragment {
         }
 
     }
-    
-    public void initMonthChart(){
+
+    public void initMonthChart() {
+
+        chartMonth.setOnChartGestureListener(new OnChartGestureListener() {
+            @Override
+            public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+
+            }
+
+            @Override
+            public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+
+            }
+
+            @Override
+            public void onChartDoubleTapped(MotionEvent me) {
+
+            }
+
+            @Override
+            public void onChartSingleTapped(MotionEvent me) {
+                isMonthChartSelected = !isMonthChartSelected;
+                if (isMonthChartSelected) {
+                    chartMonth.getData().setValueTextSize(6f);
+                } else {
+                    chartMonth.getData().setValueTextSize(0f);
+                }
+                chartMonth.setDrawValueAboveBar(isMonthChartSelected);
+            }
+
+            @Override
+            public void onChartFling(MotionEvent me1, MotionEvent me2, float velocityX, float velocityY) {
+
+            }
+
+            @Override
+            public void onChartScale(MotionEvent me, float scaleX, float scaleY) {
+
+            }
+
+            @Override
+            public void onChartTranslate(MotionEvent me, float dX, float dY) {
+
+            }
+
+            @Override
+            public void onChartLongPressed(MotionEvent me) {
+
+            }
+
+        });
+
         ArrayList<BarEntry> monthEntries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
@@ -287,8 +379,7 @@ public class ProfileCalendarFragment extends Fragment {
             try {
                 monthEntries.add(new BarEntry(30 - i, (float) mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getShowerLengthMinutes()));
                 labels.add("");
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 break;
             }
         }
@@ -318,7 +409,7 @@ public class ProfileCalendarFragment extends Fragment {
         XAxis xAxis = chartMonth.getXAxis();
         xAxis.setValueFormatter(new XAxisFormatterNone());
 
-        if (mainActivity.isDarkMode()){
+        if (mainActivity.isDarkMode()) {
             xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartMonth.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartMonth.getAxisLeft().setSpaceBottom(0);
@@ -327,17 +418,67 @@ public class ProfileCalendarFragment extends Fragment {
             chartMonth.setGridBackgroundColor(ContextCompat.getColor(mainActivity, R.color.headerTextColor));
         }
     }
-    
+
     public void initYearChart() {
+
+        chartYear.setOnChartGestureListener(new OnChartGestureListener() {
+            @Override
+            public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+
+            }
+
+            @Override
+            public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+
+            }
+
+            @Override
+            public void onChartDoubleTapped(MotionEvent me) {
+
+            }
+
+            @Override
+            public void onChartSingleTapped(MotionEvent me) {
+                isYearChartSelected = !isYearChartSelected;
+                if (isYearChartSelected) {
+                    chartYear.getData().setValueTextSize(6f);
+                } else {
+                    chartYear.getData().setValueTextSize(0f);
+                }
+                chartYear.setDrawValueAboveBar(isYearChartSelected);
+            }
+
+            @Override
+            public void onChartFling(MotionEvent me1, MotionEvent me2, float velocityX, float velocityY) {
+
+            }
+
+            @Override
+            public void onChartScale(MotionEvent me, float scaleX, float scaleY) {
+
+            }
+
+            @Override
+            public void onChartTranslate(MotionEvent me, float dX, float dY) {
+
+            }
+
+            @Override
+            public void onChartLongPressed(MotionEvent me) {
+
+            }
+
+        });
+
         ArrayList<BarEntry> yearEntries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
 
-       for (int i = 1; i <= months.size(); i++){
-           if (months.get(i-1).size() > 0){
-               yearEntries.add(new BarEntry(i, getAverage(months.get(i-1)))); //add the average of each month to the graph, up to 12 months
-           }
-       }
+        for (int i = 1; i <= months.size(); i++) {
+            if (months.get(i - 1).size() > 0) {
+                yearEntries.add(new BarEntry(i, getAverage(months.get(i - 1)))); //add the average of each month to the graph, up to 12 months
+            }
+        }
 
 
         BarDataSet barDataSet = new BarDataSet(yearEntries, "Average Minutes Spent Showering per Month");
@@ -359,7 +500,7 @@ public class ProfileCalendarFragment extends Fragment {
         XAxis xAxis = chartYear.getXAxis();
         xAxis.setValueFormatter(new XAxisFormatterNone());
 
-        if (mainActivity.isDarkMode()){
+        if (mainActivity.isDarkMode()) {
             xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartYear.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartYear.getAxisLeft().setSpaceBottom(0);
@@ -369,30 +510,21 @@ public class ProfileCalendarFragment extends Fragment {
         }
     }
 
-    public static ArrayList<String> reverseArrayList(ArrayList<String> arrayList){
-        ArrayList<String> reversed = new ArrayList<>();
-        for (int i = arrayList.size() - 1; i >= 0; i--){
-            reversed.add(arrayList.get(i));
-        }
-        return reversed;
-    }
-
-    public float getAverage(ArrayList<Double> arrayList){
+    public float getAverage(ArrayList<Double> arrayList) {
         double sum = 0;
-        for (double num: arrayList){
+        for (double num : arrayList) {
             sum += num;
         }
         return (float) (sum / arrayList.size());
     }
 
 
-
 }
-
 
 
 class XAxisFormatter extends IndexAxisValueFormatter {
     ArrayList<String> labels;
+
     public XAxisFormatter(ArrayList<String> labels) {
         this.labels = labels;
     }

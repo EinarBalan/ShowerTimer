@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,7 @@ public class SettingsFragment extends Fragment {
     private ImageButton buttonBack;
     private Button buttonApply;
     private Button buttonLogIn;
+    private Button buttonDeleteAccount;
 
     private EditText editTextFlowRate;
     private EditText editTextCost;
@@ -64,6 +66,7 @@ public class SettingsFragment extends Fragment {
         buttonBack = v.findViewById(R.id.buttonBack);  buttonBack.setOnClickListener(onClickListener);
         buttonApply = v.findViewById(R.id.buttonApplyChanges); buttonApply.setOnClickListener(onClickListener);
         buttonLogIn = v.findViewById(R.id.buttonLogIn); buttonLogIn.setOnClickListener(onClickListener);
+        buttonDeleteAccount = v.findViewById(R.id.buttonDeleteAccount); buttonDeleteAccount.setOnClickListener(onClickListener);
 
         editTextFlowRate = v.findViewById(R.id.editTextFlowRate);  editTextFlowRate.setHint(Shower.getGallonsPerMinute() + " gallons per minute");
         editTextCost = v.findViewById(R.id.editTextCost); editTextCost.setHint(Shower.getDollarsPerGallon() * 100 + " cents per gallon");
@@ -94,6 +97,7 @@ public class SettingsFragment extends Fragment {
         if (mainActivity.isUserAnon()){
             linearLayoutGoal.setVisibility(View.VISIBLE);
             buttonLogIn.setVisibility(View.VISIBLE);
+            buttonDeleteAccount.setVisibility(View.GONE);
         }
 
         //prevent leaving without applying changes by accident
@@ -120,6 +124,9 @@ public class SettingsFragment extends Fragment {
                     break;
                 case R.id.buttonLogIn:
                     mainActivity.logOutAnon();
+                    break;
+                case R.id.buttonDeleteAccount:
+                    mainActivity.deleteUser();
                     break;
             }
         }
