@@ -178,26 +178,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    @Override
-//    protected void onPostResume() {
-//        Log.d("D", "Post Resume");
-//        super.onPostResume();
-//    }
-//
-//    @Override
-//    protected void onStart() {
-//        Log.d("D", "Start");
-//        super.onStart();
-//    }
-//
-//    @Override
-//    protected void onStop() {
-//        Log.d("D", "Stop");
-//        super.onStop();
-//    }
-
     @Override
     protected void onDestroy() {
+        if (firebaseAuth.getCurrentUser() != null) {
+            if (isUserAnon()) {
+                firebaseAuth.getCurrentUser().delete();
+            }
+        }
         soundPool.release();
         soundPool = null;
         super.onDestroy();
@@ -289,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
-        firebaseAuth.getCurrentUser().delete();
+//        firebaseAuth.getCurrentUser().delete();
         editor.clear().apply();
 
         Intent restart = new Intent(MainActivity.this, SplashActivity.class);

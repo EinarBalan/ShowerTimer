@@ -151,11 +151,18 @@ public class SettingsFragment extends Fragment {
                                      try {
                                          Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://app.termly.io/document/privacy-policy/cf48d4b6-09ce-4631-83fe-b26d1e456a3d"));
                                          startActivity(browserIntent);
-                                         return true;
                                      } catch (Exception e) {
                                          e.printStackTrace();
-                                         return false;
                                      }
+                                     break;
+                                 case R.id.menuAbout:
+                                     try {
+                                         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://youthforsustainability.org/"));
+                                         startActivity(browserIntent);
+                                     } catch (Exception e) {
+                                         e.printStackTrace();
+                                     }
+
                              }
                              return false;
                          }

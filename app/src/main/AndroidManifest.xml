@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.balanstudios.showerly">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -8,16 +9,19 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
+
+
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/showerly_app_icon_rain_drop"
+        android:icon="@mipmap/showerly_app_icon_final_v1"
         android:label="Showerly"
-        android:roundIcon="@mipmap/showerly_app_icon_rain_drop_round"
+        android:roundIcon="@mipmap/showerly_app_icon_final_v1_round"
         android:supportsRtl="true"
-        android:theme="@style/ShowerTimerLight">
+        android:theme="@style/ShowerTimerLight"
+        tools:ignore="GoogleAppIndexingWarning">
         <activity android:name=".RecoverAccountActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/SplashTheme"></activity>
+            android:theme="@style/SplashTheme"/>
         <activity
             android:name=".SignUpActivity"
             android:screenOrientation="portrait"

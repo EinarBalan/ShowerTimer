@@ -4,4 +4,7 @@
     <item
         android:id="@+id/menuPrivacyPolicy"
         android:title="Privacy Policy" />
+    <item
+        android:id="@+id/menuAbout"
+        android:title="About Youth for Sustainability" />
 </menu>
