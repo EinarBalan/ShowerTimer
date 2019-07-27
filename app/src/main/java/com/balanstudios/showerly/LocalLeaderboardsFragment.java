@@ -93,6 +93,7 @@ public class LocalLeaderboardsFragment extends Fragment {
                     try {
 
                         leaderboardsRecycler.setHasFixedSize(false);
+                        leaderboardsRecycler.setNestedScrollingEnabled(false);
                         leaderboardsLayoutManager = new LinearLayoutManager(getActivity());
 
                         leaderboardsRecycler.setLayoutManager(leaderboardsLayoutManager);

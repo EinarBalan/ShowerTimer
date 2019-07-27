@@ -152,11 +152,6 @@ public class EditProfileFragment extends Fragment {
                     }
                     else {
                         requestLocationPermission();
-                        if (mainActivity.findCity().length() > 0) {
-                            textViewAddCity.setText(mainActivity.findCity());
-                            mainActivity.setSettingsChanged(true);
-
-                        }
                     }
                     break;
                 case R.id.textViewSendEmail:
@@ -200,8 +195,7 @@ public class EditProfileFragment extends Fragment {
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, COURSE_LOCATION_PERMISSION_CODE);
-
+                            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, COURSE_LOCATION_PERMISSION_CODE);
                         }
                     })
                     .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
@@ -213,7 +207,7 @@ public class EditProfileFragment extends Fragment {
             .create().show();
         }
         else {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, COURSE_LOCATION_PERMISSION_CODE);
+            requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, COURSE_LOCATION_PERMISSION_CODE);
         }
 
 
@@ -224,6 +218,10 @@ public class EditProfileFragment extends Fragment {
         if (requestCode == COURSE_LOCATION_PERMISSION_CODE){
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 Toast.makeText(getActivity(), "Permission was granted.", Toast.LENGTH_SHORT).show();
+                if (mainActivity.findCity().length() > 0) {
+                    textViewAddCity.setText(mainActivity.findCity());
+                    mainActivity.setSettingsChanged(true);
+                }
             }
             else {
                 Toast.makeText(getActivity(), "Permission was not granted.", Toast.LENGTH_SHORT).show();

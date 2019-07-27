@@ -1087,6 +1087,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (user.getAvgShowerLength() > 0) {
+            if (top25Users.size() == 20 && user.getAvgShowerLength() > top25Users.get(top25Users.size() - 1).getAvgShowerLength()){
+                return false;
+            }
+            
             if (top25Users.size() > 1) {
                 int index = 0;
                 for (int i = top25Users.size() - 1; i >= 0; i--) {
@@ -1109,7 +1113,7 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
 
-            if (top25Users.size() > 25) {
+            if (top25Users.size() > 20) {
                 top25Users.remove(top25Users.size() - 1);
 
             }
@@ -1126,6 +1130,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (user.getAvgShowerLength() > 0 && city.length() > 0) {
+            if (localTop25Users.size() == 20 && user.getAvgShowerLength() > localTop25Users.get(localTop25Users.size() - 1).getAvgShowerLength()){
+                return false;
+            }
+            
             if (localTop25Users.size() > 1) {
                 int index = 0;
                 for (int i = localTop25Users.size() - 1; i >= 0; i--) {
@@ -1148,7 +1156,7 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
 
-            if (localTop25Users.size() > 25) {
+            if (localTop25Users.size() > 20) {
                 localTop25Users.remove(localTop25Users.size() - 1);
 
             }
