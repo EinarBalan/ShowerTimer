@@ -4,10 +4,9 @@ package com.balanstudios.showerly;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -23,8 +22,6 @@ import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.net.URL;
 
 
 /**
@@ -149,7 +146,7 @@ public class SettingsFragment extends Fragment {
                              switch (menuItem.getItemId()) {
                                  case R.id.menuPrivacyPolicy:
                                      try {
-                                         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://app.termly.io/document/privacy-policy/cf48d4b6-09ce-4631-83fe-b26d1e456a3d"));
+                                         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://app.termly.io/document/privacy-policy/6641d54f-707a-45a7-90b6-99ea13a40e98#DNT"));
                                          startActivity(browserIntent);
                                      } catch (Exception e) {
                                          e.printStackTrace();

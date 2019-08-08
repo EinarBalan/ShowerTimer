@@ -1,8 +1,8 @@
 package com.balanstudios.showerly;
 
 import android.Manifest;
-import android.app.Dialog;
-import android.arch.lifecycle.Lifecycle;
+
+import androidx.lifecycle.Lifecycle;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,14 +18,14 @@ import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import androidx.annotation.NonNull;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.view.View;
@@ -48,7 +48,6 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -85,7 +84,6 @@ public class MainActivity extends AppCompatActivity {
     String top25UsersJson = "";
     String localTop25UsersJson = "";
     private BottomNavigationView mainNavBar;
-    private ProfileFragment profileFragment;
     private HomeFragment homeFragment;
     private LeaderboardsFragment leaderboardsFragment;
     private FragmentManager fragmentManager;
@@ -210,7 +208,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        profileFragment = new ProfileFragment();
         homeFragment = new HomeFragment();
         leaderboardsFragment = new LeaderboardsFragment();
 
@@ -774,6 +771,9 @@ public class MainActivity extends AppCompatActivity {
             latitude = final_loc.getLatitude();
             longitude = final_loc.getLongitude();
         }
+        else {
+            Toast.makeText(this, "Cannot find location.", Toast.LENGTH_SHORT).show();
+        }
 
         try {
             Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
@@ -858,8 +858,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void sortLowToHigh(ArrayList<ShowerlyUser> users){
         ShowerlyUser tempUser;
-        for (int i = 0; i < users.size(); i++){
-            for (int j = i + 1; j < users.size() - 1; j++){
+        for (int i = 0; i < users.size() - 1; i++){
+            for (int j = i + 1; j < users.size(); j++){
                 if (users.get(i).getAvgShowerLength() > users.get(j).getAvgShowerLength()){
                     tempUser = users.get(j);
                     users.set(j, users.get(i));
