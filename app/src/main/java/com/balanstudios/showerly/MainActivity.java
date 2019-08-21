@@ -48,6 +48,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -168,6 +169,8 @@ public class MainActivity extends AppCompatActivity {
             commonInit();
 
         } else {
+            loadAnonShowers();
+            loadAnonStats();
             loadSettings();
             commonInit();
             mainNavBar.setVisibility(View.GONE);
@@ -270,15 +273,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void logOutAnon() {
-        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+        showAlertDialog("Are you sure?", "Proceeding will clear your guest data. Go to log in screen?", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
 
-//        firebaseAuth.getCurrentUser().delete();
-        editor.clear().apply();
+                editor.clear().apply();
 
-        Intent restart = new Intent(MainActivity.this, SplashActivity.class);
-        startActivity(restart);
-        finish();
+                Intent restart = new Intent(MainActivity.this, SplashActivity.class);
+                startActivity(restart);
+                finish();
+
+                firebaseAuth.getCurrentUser().delete();
+
+            }
+        });
+
     }
 
     public void sendResetPasswordEmail() {
@@ -372,6 +383,30 @@ public class MainActivity extends AppCompatActivity {
             return isNetworkConnected();
     }
 
+    public void saveAnonShowers(){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        userShowersJson = gson.toJson(userShowers);
+        editor.putString(KEY_USER_SHOWERS, userShowersJson);
+
+        editor.apply();
+    }
+
+    public void saveAnonStats(){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putLong(KEY_AVG_SHOWER_LEN, Double.doubleToRawLongBits(avgShowerLengthMinutes));
+        editor.putLong(KEY_TOTAL_COST, Double.doubleToRawLongBits(totalCost));
+        editor.putLong(KEY_TOTAL_TIME, Double.doubleToRawLongBits(totalTimeMinutes));
+        editor.putLong(KEY_TOTAL_VOLUME, Double.doubleToRawLongBits(totalVolume));
+        editor.putLong(KEY_GOAL_TIME, goalTimeMillis);
+        editor.putInt(KEY_NUM_SHOWERS, numShowers);
+
+        editor.apply();
+    }
+
     public void loadUserShowersFromFireStore() {
         documentReference.get()
                 .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
@@ -404,6 +439,28 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Something went wrong when loading your showers!", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    public void loadAnonShowers() {
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        userShowersJson = sharedPreferences.getString(KEY_USER_SHOWERS, "");
+        if (userShowersJson.length() > 0){
+            Type typeList = new TypeToken<ArrayList<Shower>>() {
+            }.getType();
+            userShowers = gson.fromJson(userShowersJson, typeList);
+        }
+
+    }
+
+    public void loadAnonStats() {
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+
+        avgShowerLengthMinutes = Double.longBitsToDouble(sharedPreferences.getLong(KEY_AVG_SHOWER_LEN, Double.doubleToLongBits(0)));
+        totalCost = Double.longBitsToDouble(sharedPreferences.getLong(KEY_TOTAL_COST, Double.doubleToLongBits(0)));
+        totalTimeMinutes = Double.longBitsToDouble(sharedPreferences.getLong(KEY_TOTAL_TIME, Double.doubleToLongBits(0)));
+        totalVolume = Double.longBitsToDouble(sharedPreferences.getLong(KEY_TOTAL_VOLUME, Double.doubleToLongBits(0)));
+        goalTimeMillis = sharedPreferences.getLong(KEY_GOAL_TIME, 0);
+        numShowers = sharedPreferences.getInt(KEY_NUM_SHOWERS, 0);
     }
 
     public void loadUserLifetimeStatsFromFireStore() {
@@ -817,21 +874,55 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public boolean isUserAnon() {
-        return firebaseAuth.getCurrentUser().isAnonymous();
+        if (firebaseAuth.getCurrentUser() != null) {
+            return firebaseAuth.getCurrentUser().isAnonymous();
+        }
+        else {
+            return true;
+        }
     }
 
     public void deleteUser() {
         DialogInterface.OnClickListener onClickListener = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-//                for (Iterator<ShowerlyUser> s = top25Users.iterator(); s.hasNext();){
-//                    if (s.equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes() ))){
-//                        s.remove();
+                int j = 0;
+                while (j < top25Users.size()) {
+                    if (top25Users.get(j).equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes()))) {
+                        top25Users.remove(j);
+                        j++;
+                        if (j > 0 ) {
+                            j--;
+                        }
+                    }
+                    else {
+                        j++;
+                    }
+                }
+                while (j < localTop25Users.size()) {
+                    if (localTop25Users.get(j).equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes()))) {
+                        localTop25Users.remove(j);
+                        j++;
+                        if (j > 0 ) {
+                            j--;
+                        }
+                    }
+                    else {
+                        j++;
+                    }
+                }
+//                for (int j = 0; j < top25Users.size(); j++){
+//                    if (top25Users.get(i).equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes() ))){
+//                        top25Users.remove(i);
+//                        if (j > 0 ) {
+//                            j--;
+//                        }
 //                    }
 //                }
-//                for (Iterator<ShowerlyUser> s = localTop25Users.iterator(); s.hasNext();){
-//                    if (s.equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes() ))){
-//                        s.remove();
+//                for (int j = 0; j < localTop25Users.size(); j++){
+//                    if (localTop25Users.get(j).equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes() ))){
+//                        localTop25Users.remove(j);
+//                        j--;
 //                    }
 //                }
                 saveLeaderboards();

@@ -113,22 +113,27 @@ public class HomeFragment extends Fragment {
         mainActivity.loadCache();
         updateCachedText();
 
-        if (!mainActivity.isUserAnon()) {
+        if (mainActivity.isUserAnon()){
+            buttonSave.setText("Settings");
+            updateLifetimeStatsTextViews();
+        }
+
+//        if (!mainActivity.isUserAnon()) {
             new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
                 @Override
                 public void run() {
                     updateLifetimeStatsTextViews();
                 }
             }, 3000);
-        }
-        else {
-            buttonSave.setText("Settings");
-            textViewTimeSpent.setText("---");
-            textViewAvgShowerLength.setText("---");
-            textViewTotalVolume.setText("---");
-            textViewTotalCost.setText("---");
-
-        }
+//        }
+//        else {
+//            buttonSave.setText("Settings");
+//            textViewTimeSpent.setText("---");
+//            textViewAvgShowerLength.setText("---");
+//            textViewTotalVolume.setText("---");
+//            textViewTotalCost.setText("---");
+//
+//        }
 
         return v;
     }
@@ -242,7 +247,8 @@ public class HomeFragment extends Fragment {
             //button hide animation
 
             if (mainActivity.isUserAnon()) {
-                buttonSave.setAlpha(.5f);
+//                buttonSave.setAlpha(.5f);
+                buttonSave.setText("Save");
             }
 
             buttonReset.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fade_out_fast));
@@ -284,7 +290,8 @@ public class HomeFragment extends Fragment {
         //reset stats here
         progressBarOverflow.setProgress(0);
         if (mainActivity.isUserAnon()){
-            buttonSave.setAlpha(1);
+//            buttonSave.setAlpha(1);
+            buttonSave.setText("Settings");
         }
         else {
             mainActivity.getMainNavBar().setVisibility(View.VISIBLE);
@@ -315,51 +322,54 @@ public class HomeFragment extends Fragment {
                     updateCachedText();
 
                     ShowerlyUser currentUser = new ShowerlyUser(mainActivity.getEmail(), mainActivity.getDisplayName(), mainActivity.getAvgShowerLengthMinutes());
-                    for (int i = 0; i < mainActivity.getTop25Users().size(); i++){ //update leaderboards with new avg time
-                        if (currentUser.equals(mainActivity.getTop25Users().get(i))){
-                            mainActivity.getTop25Users().set(i, currentUser);
 
-                            if (i > 0 ) {
-                                if (currentUser.getAvgShowerLength() < mainActivity.getTop25Users().get(i - 1).getAvgShowerLength()) { //reorder leaderboards if there are changes
-                                    ShowerlyUser tempUser = mainActivity.getTop25Users().get(i - 1);
-                                    mainActivity.getTop25Users().set(i - 1, currentUser);
-                                    mainActivity.getTop25Users().set(i, tempUser);
-                                }
-                            }
-                            if (i < mainActivity.getTop25Users().size() - 1){
-                                if (currentUser.getAvgShowerLength() > mainActivity.getTop25Users().get(i + 1).getAvgShowerLength()){
-                                    ShowerlyUser tempUser = mainActivity.getTop25Users().get(i + 1);
-                                    mainActivity.getTop25Users().set(i + 1, currentUser);
-                                    mainActivity.getTop25Users().set(i, tempUser);
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    if (mainActivity.getCity().length() > 0){
-                        for (int i = 0; i < mainActivity.getLocalTop25Users().size(); i++){ //update leaderboards with new avg time
-                            if (currentUser.equals(mainActivity.getLocalTop25Users().get(i))){
-                                mainActivity.getLocalTop25Users().set(i, currentUser);
+                    if (mainActivity.getUserShowers().size() >= 5 && mainActivity.getAvgShowerLengthMinutes() >= 2) {
+                        for (int i = 0; i < mainActivity.getTop25Users().size(); i++){ //update leaderboards with new avg time
+                            if (currentUser.equals(mainActivity.getTop25Users().get(i))){
+                                mainActivity.getTop25Users().set(i, currentUser);
 
-                                if (i > 0) {
-                                    if (currentUser.getAvgShowerLength() < mainActivity.getLocalTop25Users().get(i - 1).getAvgShowerLength()) { //reorder leaderboards if there are changes
-                                        ShowerlyUser tempUser = mainActivity.getLocalTop25Users().get(i - 1);
-                                        mainActivity.getLocalTop25Users().set(i - 1, currentUser);
-                                        mainActivity.getLocalTop25Users().set(i, tempUser);
+                                if (i > 0 ) {
+                                    if (currentUser.getAvgShowerLength() < mainActivity.getTop25Users().get(i - 1).getAvgShowerLength()) { //reorder leaderboards if there are changes
+                                        ShowerlyUser tempUser = mainActivity.getTop25Users().get(i - 1);
+                                        mainActivity.getTop25Users().set(i - 1, currentUser);
+                                        mainActivity.getTop25Users().set(i, tempUser);
                                     }
                                 }
-                                if (i < mainActivity.getLocalTop25Users().size() - 1){
-                                    if (currentUser.getAvgShowerLength() > mainActivity.getLocalTop25Users().get(i + 1).getAvgShowerLength()){
-                                        ShowerlyUser tempUser = mainActivity.getLocalTop25Users().get(i + 1);
-                                        mainActivity.getLocalTop25Users().set(i + 1, currentUser);
-                                        mainActivity.getLocalTop25Users().set(i, tempUser);
+                                if (i < mainActivity.getTop25Users().size() - 1){
+                                    if (currentUser.getAvgShowerLength() > mainActivity.getTop25Users().get(i + 1).getAvgShowerLength()){
+                                        ShowerlyUser tempUser = mainActivity.getTop25Users().get(i + 1);
+                                        mainActivity.getTop25Users().set(i + 1, currentUser);
+                                        mainActivity.getTop25Users().set(i, tempUser);
                                     }
                                 }
                                 break;
                             }
                         }
+                        if (mainActivity.getCity().length() > 0){
+                            for (int i = 0; i < mainActivity.getLocalTop25Users().size(); i++){ //update leaderboards with new avg time
+                                if (currentUser.equals(mainActivity.getLocalTop25Users().get(i))){
+                                    mainActivity.getLocalTop25Users().set(i, currentUser);
+
+                                    if (i > 0) {
+                                        if (currentUser.getAvgShowerLength() < mainActivity.getLocalTop25Users().get(i - 1).getAvgShowerLength()) { //reorder leaderboards if there are changes
+                                            ShowerlyUser tempUser = mainActivity.getLocalTop25Users().get(i - 1);
+                                            mainActivity.getLocalTop25Users().set(i - 1, currentUser);
+                                            mainActivity.getLocalTop25Users().set(i, tempUser);
+                                        }
+                                    }
+                                    if (i < mainActivity.getLocalTop25Users().size() - 1){
+                                        if (currentUser.getAvgShowerLength() > mainActivity.getLocalTop25Users().get(i + 1).getAvgShowerLength()){
+                                            ShowerlyUser tempUser = mainActivity.getLocalTop25Users().get(i + 1);
+                                            mainActivity.getLocalTop25Users().set(i + 1, currentUser);
+                                            mainActivity.getLocalTop25Users().set(i, tempUser);
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        mainActivity.saveLeaderboards();
                     }
-                    mainActivity.saveLeaderboards();
 
                     new Handler().postDelayed(new Runnable() { //delayed because otherwise firestore variables won't update in time
                         @Override
@@ -380,8 +390,22 @@ public class HomeFragment extends Fragment {
         else if (elapsedTimeMillis == 0) { //if anon
             mainActivity.setFragmentReturnableSlide(new SettingsFragment());
         }
-        else {
-            Toast.makeText(getActivity(), "Cannot open settings while timer is running.", Toast.LENGTH_SHORT).show();
+        else if (elapsedTimeMillis >= 15000){
+            mainActivity.getUserShowers().add(new Shower(elapsedTimeMillis, instanceDate, instanceTime, elapsedTimeMillis <= mainActivity.getGoalTimeMillis()));
+
+            mainActivity.addTotalTimeMinutes(elapsedTimeMinutes);
+            mainActivity.addTotalCost(instanceCost);
+            mainActivity.addTotalVolume(instanceVolume);
+            mainActivity.setAvgShowerLengthMinutesCache(mainActivity.calculateAvgShowerLengthMinutes());
+
+            mainActivity.saveAnonShowers();
+            mainActivity.saveAnonStats();
+
+            updateLifetimeStatsTextViews();
+            resetTimer(buttonSave);
+        }
+        else if (elapsedTimeMillis < 15000){
+            Toast.makeText(mainActivity, "Shower is too short to be saved.", Toast.LENGTH_SHORT).show();
         }
     }
 

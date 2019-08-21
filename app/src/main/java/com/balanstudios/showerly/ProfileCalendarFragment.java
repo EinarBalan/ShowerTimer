@@ -281,13 +281,18 @@ public class ProfileCalendarFragment extends Fragment {
         }
 
         for (int i = 0; i < dates.length; i++) {
-            if (dates[i].length() == 0) {
+            if (dates[i].length() == 0 && (dayOfMonth - 6 + i) > 0) {
                 dates[i] = monthCode + "/" + (dayOfMonth - 6 + i);
             }
             labels.add(dates[i]);
         }
 
-        textViewWeek.setText(dates[0] + " to " + dates[6] + " - Weekly Trend");
+        if (dates[0].length() > 0) {
+            textViewWeek.setText(dates[0] + " to " + dates[6] + " - Weekly Trend");
+        }
+        else {
+            textViewWeek.setText("Weekly Trend");
+        }
 
         BarDataSet barDataSet = new BarDataSet(weekEntries, "Minutes Spent Showering");
         ArrayList<Integer> colors = new ArrayList<>();

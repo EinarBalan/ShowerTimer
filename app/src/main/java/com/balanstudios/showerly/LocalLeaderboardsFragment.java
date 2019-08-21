@@ -59,7 +59,7 @@ public class LocalLeaderboardsFragment extends Fragment {
             textViewNotEnoughUsers.setText("In order to see the local leaderboards you need to set your location in the settings.");
         }
 
-        if (mainActivity.getDisplayName() != null && mainActivity.getDisplayName().length() > 0 && mainActivity.getUserShowers().size() > 0) {
+        if (mainActivity.getDisplayName() != null && mainActivity.getDisplayName().length() > 0 && mainActivity.getUserShowers().size() > 0 && mainActivity.getUserShowers().size() >= 5 && mainActivity.getAvgShowerLengthMinutes() >= 2) {
             ShowerlyUser user = new ShowerlyUser(mainActivity.getEmail(), mainActivity.getDisplayName(), mainActivity.getAvgShowerLengthMinutes());
             mainActivity.addUserGlobal(user);
             mainActivity.addUserLocal(user);

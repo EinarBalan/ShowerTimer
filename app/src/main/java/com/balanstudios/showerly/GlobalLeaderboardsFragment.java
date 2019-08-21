@@ -51,7 +51,7 @@ public class GlobalLeaderboardsFragment extends Fragment {
         leaderboardsRecycler.setVisibility(View.VISIBLE);
         leaderboardsRecycler.startAnimation(AnimationUtils.loadAnimation(mainActivity, R.anim.fade_in_button));
 
-        if (mainActivity.getDisplayName() != null && mainActivity.getDisplayName().length() > 0 && mainActivity.getUserShowers().size() > 0) {
+        if (mainActivity.getDisplayName() != null && mainActivity.getDisplayName().length() > 0 && mainActivity.getUserShowers().size() >= 5 && mainActivity.getAvgShowerLengthMinutes() >= 2) {
             ShowerlyUser user = new ShowerlyUser(mainActivity.getEmail(), mainActivity.getDisplayName(), mainActivity.getAvgShowerLengthMinutes());
             mainActivity.addUserGlobal(user);
             mainActivity.addUserLocal(user);
@@ -66,8 +66,11 @@ public class GlobalLeaderboardsFragment extends Fragment {
 
         } else if (mainActivity.getDisplayName() == null || mainActivity.getDisplayName().length() == 0) {
             Toast.makeText(mainActivity, "Set display name to participate in leaderboards", Toast.LENGTH_SHORT).show();
-        } else if (mainActivity.getUserShowers().size() == 0) {
+        } else if (mainActivity.getUserShowers().size() < 5) {
             Toast.makeText(mainActivity, "Need more data to participate in leaderboards", Toast.LENGTH_SHORT).show();
+        }
+        else if (mainActivity.getAvgShowerLengthMinutes() < 2.5) {
+            Toast.makeText(mainActivity, "Average shower length is too short to participate in leaderboards", Toast.LENGTH_SHORT).show();
         }
 
         return v;
