@@ -1,6 +1,6 @@
 package com.balanstudios.showerly;
 
-import java.util.Calendar;
+import java.util.Date;
 
 public class Shower {
 
@@ -10,10 +10,11 @@ public class Shower {
     private static double dollarsPerGallon = .0015;
     private double volume;
     private double cost;
-    private String date;
-    private int dayOfMonth = 0;
-    private int monthNum = 0;
-    private String time;
+    private DateHandler dateHandler = new DateHandler();
+//    private String date;
+//    private int dayOfMonth = 0;
+//    private int monthNum = 0;
+//    private String time;
     private boolean goalMet;
 
     public Shower(){
@@ -21,11 +22,21 @@ public class Shower {
         showerLengthMinutes = 0;
         volume = 0;
         cost = 0;
-        date = "";
-        dayOfMonth = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
-        monthNum = Calendar.getInstance().get(Calendar.MONTH) + 1;
-        time = "";
+//        date = "";
+//        dayOfMonth = dateHandler.getDayOfMonth();
+//        monthNum = dateHandler.getMonthCode();
+//        time = "";
         goalMet = false;
+    }
+
+    public Shower(long showerLengthMillis, boolean goalMet){
+        this.showerLengthMillis = showerLengthMillis;
+        showerLengthMinutes = (double)showerLengthMillis / 1000 / 60;
+        volume = calculateVolume(showerLengthMinutes);
+        cost = calculateCost(volume);
+//        dayOfMonth = dateHandler.getDayOfMonth();
+//        monthNum = dateHandler.getMonthCode();
+        this.goalMet = goalMet;
     }
 
     public Shower(long showerLengthMillis, String date, String time, boolean goalMet){
@@ -33,15 +44,15 @@ public class Shower {
         showerLengthMinutes = (double)showerLengthMillis / 1000 / 60;
         volume = calculateVolume(showerLengthMinutes);
         cost = calculateCost(volume);
-        this.date = date;
-        dayOfMonth = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
-        monthNum = Calendar.getInstance().get(Calendar.MONTH) + 1;
-        this.time = time;
+//        this.date = date;
+//        dayOfMonth = dateHandler.getDayOfMonth();
+//        monthNum = dateHandler.getMonthCode();
+//        this.time = time;
         this.goalMet = goalMet;
     }
 
     public String toString(){
-        String s = "Showered for " + showerLengthMinutes + " minutes on " + date + " at " + time + ". Volume: " + volume + " Cost: " + cost + " Goal Met: " + goalMet;
+        String s = "Showered for " + showerLengthMinutes + " minutes on " + getDate() + " at " + getTime() + ". Volume: " + volume + " Cost: " + cost + " Goal Met: " + goalMet;
         return s;
     }
 
@@ -80,20 +91,13 @@ public class Shower {
     }
 
     public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
+        return dateHandler.getDateString();
     }
 
     public String getTime() {
-        return time;
+        return dateHandler.getTimeString();
     }
 
-    public void setTime(String time) {
-        this.time = time;
-    }
 
     public boolean isGoalMet() {
         return goalMet;
@@ -127,19 +131,23 @@ public class Shower {
         dollarsPerGallon = dpg;
     }
 
-    public int getDayOfMonth() {
-        return dayOfMonth;
-    }
+//    public int getDayOfMonth() {
+//        return dayOfMonth;
+//    }
 
-    public void setDayOfMonth(int dayOfMonth) {
-        this.dayOfMonth = dayOfMonth;
-    }
+//    public void setDayOfMonth(int dayOfMonth) {
+//        this.dayOfMonth = dayOfMonth;
+//    }
 
-    public int getMonthNum() {
-        return monthNum;
-    }
+//    public int getMonthNum() {
+//        return monthNum;
+//    }
 
-    public void setMonthNum(int monthNum) {
-        this.monthNum = monthNum;
+//    public void setMonthNum(int monthNum) {
+//        this.monthNum = monthNum;
+//    }
+
+    public DateHandler getDateHandler() {
+        return dateHandler;
     }
 }

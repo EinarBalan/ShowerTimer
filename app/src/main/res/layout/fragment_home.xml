@@ -38,7 +38,7 @@
                         android:layout_marginBottom="44dp"
 
                         android:textColor="?attr/colorDarkText"
-                        android:textSize="132sp"
+                        android:textSize="132dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"

@@ -128,7 +128,8 @@
                                 android:layout_weight="1"
                                 android:text="Daily Summary"
                                 android:textAlignment="center"
-                                android:textColor="?attr/colorDarkText" />
+                                android:textColor="?attr/colorDarkText"
+                                android:visibility="gone" />
 
                             <com.github.mikephil.charting.charts.BarChart
                                 android:id="@+id/chartLastShower"
@@ -136,7 +137,7 @@
                                 android:layout_height="200dp"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginBottom="8dp"
-                                android:visibility="visible"></com.github.mikephil.charting.charts.BarChart>
+                                android:visibility="gone"></com.github.mikephil.charting.charts.BarChart>
 
                         </LinearLayout>
 

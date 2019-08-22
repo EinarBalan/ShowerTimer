@@ -1,15 +1,16 @@
 package com.balanstudios.showerly;
 
 
+import android.graphics.Color;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.core.content.ContextCompat;
 import androidx.cardview.widget.CardView;
+
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -21,9 +22,7 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.listener.ChartTouchListener;
 import com.github.mikephil.charting.listener.OnChartGestureListener;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 
 /**
@@ -34,29 +33,25 @@ public class ProfileCalendarFragment extends Fragment {
 
     private static int dayOfMonth = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
     private MainActivity mainActivity;
+    private BarChart chartDay;
     private BarChart chartWeek;
     private BarChart chartMonth;
     private BarChart chartYear;
-    private LinearLayout linearLayoutYear;
+    private CardView cardViewDay;
     private CardView cardViewYear;
-    private LinearLayout linearLayoutMonth;
     private CardView cardViewMonth;
-    private LinearLayout linearLayoutWeek;
     private CardView cardViewWeek;
     private TextView textViewNoShowerData;
+    private TextView textViewDay;
     private TextView textViewMonth;
     private TextView textViewYear;
     private TextView textViewWeek;
-    private Calendar calendar = Calendar.getInstance();
-    private SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM");
-    private SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
-    private String month;
-    private String year;
-    private String yearNum;
-    private String monthNum;
-    private int monthCode = Calendar.getInstance().get(Calendar.MONTH) + 1;
+    private boolean isDayChartSelected = false;
     private boolean isWeekChartSelected = false;
     private boolean isMonthChartSelected = false;
+    private boolean isYearChartSelected = false;
+    private ShowerDataOrganizer graphDataOrganizer;
+
     View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -70,21 +65,10 @@ public class ProfileCalendarFragment extends Fragment {
                     }
                     chartWeek.setDrawValueAboveBar(isWeekChartSelected);
                     break;
-                case R.id.chartMonth:
-                    isMonthChartSelected = !isMonthChartSelected;
-                    if (isMonthChartSelected) {
-                        chartMonth.getData().setValueTextSize(6f);
-                    } else {
-                        chartMonth.getData().setValueTextSize(0f);
-                    }
-                    chartMonth.setDrawValueAboveBar(isMonthChartSelected);
-                    break;
 
             }
         }
     };
-    private boolean isYearChartSelected = false;
-    private ArrayList<ArrayList<Double>> months = new ArrayList<>();
 
 
     public ProfileCalendarFragment() {
@@ -107,106 +91,162 @@ public class ProfileCalendarFragment extends Fragment {
 
         mainActivity = (MainActivity) getActivity();
 
-        linearLayoutYear = v.findViewById(R.id.linearLayoutYear);
+        cardViewDay = v.findViewById(R.id.cardViewDay);
         cardViewYear = v.findViewById(R.id.cardViewYear);
-        linearLayoutMonth = v.findViewById(R.id.linearLayoutMonth);
         cardViewMonth = v.findViewById(R.id.cardViewMonth);
-        linearLayoutWeek = v.findViewById(R.id.linearLayoutWeek);
         cardViewWeek = v.findViewById(R.id.cardViewWeek);
 
+        textViewDay = v.findViewById(R.id.textViewDay);
         textViewNoShowerData = v.findViewById(R.id.textViewNoShowerData);
         textViewMonth = v.findViewById(R.id.textViewMonth);
         textViewYear = v.findViewById(R.id.textViewYear);
         textViewWeek = v.findViewById(R.id.textViewWeek);
 
-        if (mainActivity.getUserShowers().size() > 0) {
-            yearNum = mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - 1).getDate().substring(mainActivity.getUserShowers().get(0).getDate().length() - 2);
-            monthNum = mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - 1).getDate().substring(0, 1);
+        graphDataOrganizer = new ShowerDataOrganizer(mainActivity.getUserShowers());
+
+        if (graphDataOrganizer.shouldShowDayChart()) { //only show graph if there's more than one shower in that day
+            textViewNoShowerData.setVisibility(View.GONE);
+            chartDay = v.findViewById(R.id.chartDay);
+            initDayChart();
+        } else {
+            cardViewDay.setVisibility(View.GONE);
         }
-
-        if (mainActivity.getUserShowers().size() > 0) { //only show graph if there are recorded showers
-
+        
+        if (graphDataOrganizer.shouldShowWeekChart()) { //only show graph if there are recorded showers
             textViewNoShowerData.setVisibility(View.GONE);
             chartWeek = v.findViewById(R.id.chartWeek);
-            chartWeek.setDrawBarShadow(false);
-            chartWeek.setDrawValueAboveBar(false);
-            chartWeek.setMaxVisibleValueCount(60);
-            chartWeek.setPinchZoom(false);
-            chartWeek.setScaleEnabled(false);
-            chartWeek.setDrawGridBackground(true);
-            chartWeek.getDescription().setEnabled(false);
-//            chartWeek.setTouchEnabled(false);
-//            chartWeek.setOnClickListener(onClickListener);
             initWeekChart();
         } else {
-            linearLayoutWeek.setVisibility(View.GONE);
             cardViewWeek.setVisibility(View.GONE);
         }
 
-        if (mainActivity.getUserShowers().size() > 7) { // only show month chart if it is significantly different from week chart
-
-            //separate showers based on their months
-            for (int i = 0; i < 12; i++) {
-                months.add(new ArrayList<Double>());
-            }
-
-            for (int i = mainActivity.getUserShowers().size() - 1; i >= 0; i--) {
-                Shower shower = mainActivity.getUserShowers().get(i);
-                String currentYear = shower.getDate().substring(shower.getDate().length() - 2);
-                String currentMonth = shower.getDate().substring(0, shower.getDate().indexOf("/"));
-
-                if (currentYear.equals(yearNum)) {
-                    months.get(Integer.parseInt(currentMonth) - 1).add(shower.getShowerLengthMinutes());
-                } else {
-                    break;
-                }
-            }
-
+        if (graphDataOrganizer.shouldShowMonthChart()) { //only show graph if there are recorded showers
+            textViewNoShowerData.setVisibility(View.GONE);
             chartMonth = v.findViewById(R.id.chartMonth);
-            chartMonth.setDrawBarShadow(false);
-            chartMonth.setDrawValueAboveBar(false);
-            chartMonth.setMaxVisibleValueCount(60);
-            chartMonth.setPinchZoom(false);
-            chartMonth.setScaleEnabled(false);
-            chartMonth.setDrawGridBackground(true);
-            chartMonth.getDescription().setEnabled(false);
-//            chartMonth.setTouchEnabled(false);
-//            chartMonth.setOnClickListener(onClickListener);
-
-            month = monthFormat.format(calendar.getTime());
-            textViewMonth.setText(month + " - Monthly Trend");
-
             initMonthChart();
         } else {
-            linearLayoutMonth.setVisibility(View.GONE);
             cardViewMonth.setVisibility(View.GONE);
         }
 
-        if (mainActivity.getUserShowers().size() > 40) { // only show year chart if it is significantly different from month chart
+        if (graphDataOrganizer.shouldShowYearChart()) { // only show year chart if it is significantly different from month chart
+            textViewNoShowerData.setVisibility(View.GONE);
             chartYear = v.findViewById(R.id.chartYear);
-            chartYear.setDrawBarShadow(false);
-            chartYear.setDrawValueAboveBar(false);
-            chartYear.setMaxVisibleValueCount(12);
-            chartYear.setPinchZoom(false);
-            chartYear.setDrawGridBackground(true);
-            chartYear.getDescription().setEnabled(false);
-            chartYear.setTouchEnabled(false);
-//            chartYear.setOnClickListener(onClickListener);
-
-            year = yearFormat.format(calendar.getTime());
-            textViewYear.setText(year + " - Yearly Trend");
-
             initYearChart();
         } else {
-            linearLayoutYear.setVisibility(View.GONE);
             cardViewYear.setVisibility(View.GONE);
         }
 
         return v;
     }
 
-    public void initWeekChart() {
+    public void initDayChart() {
+        textViewDay.setText("Shower Length - " + DateHandler.currentDateString + " Trend");
+        chartDay.setDrawBarShadow(false);
+        chartDay.setDrawValueAboveBar(false);
+        chartDay.setMaxVisibleValueCount(60);
+        chartDay.setPinchZoom(false);
+        chartDay.setScaleEnabled(false);
+        chartDay.getDescription().setEnabled(false);
+        chartDay.setBackgroundColor(Color.TRANSPARENT);
+        chartDay.setDrawGridBackground(false);
+        chartDay.getLegend().setEnabled(false);
+        chartDay.setOnChartGestureListener(new OnChartGestureListener() {
+            @Override
+            public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
 
+            }
+
+            @Override
+            public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+
+            }
+
+            @Override
+            public void onChartDoubleTapped(MotionEvent me) {
+
+            }
+
+            @Override
+            public void onChartSingleTapped(MotionEvent me) {
+                isDayChartSelected = !isDayChartSelected;
+                if (isDayChartSelected) {
+                    chartDay.getData().setValueTextSize(6f);
+                } else {
+                    chartDay.getData().setValueTextSize(0f);
+                }
+                chartDay.setDrawValueAboveBar(isDayChartSelected);
+            }
+
+            @Override
+            public void onChartFling(MotionEvent me1, MotionEvent me2, float velocityX, float velocityY) {
+
+            }
+
+            @Override
+            public void onChartScale(MotionEvent me, float scaleX, float scaleY) {
+
+            }
+
+            @Override
+            public void onChartTranslate(MotionEvent me, float dX, float dY) {
+
+            }
+
+            @Override
+            public void onChartLongPressed(MotionEvent me) {
+
+            }
+
+        });
+
+        ArrayList<BarEntry> dayEntries = new ArrayList<>();
+        ArrayList<String> labels = new ArrayList<>(DateHandler.hoursReadable);
+
+        for (int i = 0; i < DateHandler.hours.size(); i++) { //add day data from ShowerDataOrganizer to dayEntries array
+            Float showerLength = graphDataOrganizer.getDayMap().get(DateHandler.hours.get(i)).floatValue();
+            BarEntry entry = new BarEntry(i, showerLength);
+            dayEntries.add(entry);
+        }
+
+        BarDataSet barDataSet = new BarDataSet(dayEntries, "Minutes Spent Showering");
+        ArrayList<Integer> colors = new ArrayList<>();
+        colors.add(ContextCompat.getColor(mainActivity, R.color.colorPrimaryDark));
+        barDataSet.setColors(colors);
+
+        BarData data = new BarData(barDataSet);
+        data.setHighlightEnabled(false);
+        data.setValueTextColor(colors.get(0));
+        data.setValueTextSize(0f);
+        data.setBarWidth(.75f);
+
+        chartDay.setData(data);
+
+        chartDay.getAxisRight().setEnabled(false);
+        chartDay.getAxisLeft().setAxisMinimum(0f);
+        XAxis xAxis = chartDay.getXAxis();
+        xAxis.setLabelCount(8);
+        xAxis.setValueFormatter(new XAxisFormatter(labels));
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+
+        if (mainActivity.isDarkMode()) {
+            xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
+            chartDay.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
+            chartDay.getAxisLeft().setSpaceBottom(0);
+            chartDay.getLegend().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
+
+        }
+    }
+
+    public void initWeekChart() {
+        chartWeek.setDrawBarShadow(false);
+        chartWeek.setDrawValueAboveBar(false);
+        chartWeek.setMaxVisibleValueCount(60);
+        chartWeek.setPinchZoom(false);
+        chartWeek.setScaleEnabled(false);
+        chartWeek.getDescription().setEnabled(false);
+        chartWeek.setBackgroundColor(Color.TRANSPARENT);
+        chartWeek.setDrawGridBackground(false);
+        chartWeek.getLegend().setEnabled(false);
         chartWeek.setOnChartGestureListener(new OnChartGestureListener() {
             @Override
             public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
@@ -258,76 +298,55 @@ public class ProfileCalendarFragment extends Fragment {
         });
 
         ArrayList<BarEntry> weekEntries = new ArrayList<>();
-        ArrayList<String> labels = new ArrayList<>();
+        ArrayList<String> labels = new ArrayList<>(DateHandler.dayNames);
 
-        double[] days = new double[7];
-        String[] dates = new String[7];
-        Arrays.fill(days, 0);
-        Arrays.fill(dates, "");
-
-
-        for (Shower s : mainActivity.getUserShowers()) {
-//            Log.d("D", "Shower Day: " + s.getDayOfMonth() + " Current Day: " + dayOfMonth);
-            if (Math.abs(s.getDayOfMonth() - dayOfMonth) < 7 && s.getMonthNum() == monthCode) { //if shower is taken at most seven days from current day
-                days[6 - Math.abs(s.getDayOfMonth() - dayOfMonth)] += s.getShowerLengthMinutes();
-                dates[6 - Math.abs(s.getDayOfMonth() - dayOfMonth)] = s.getDate().substring(0, s.getDate().length() - 3);
-
-            }
+        for (int i = 0; i < DateHandler.dayNames.size(); i++) { //add week data from ShowerDataOrganizer to weekEntries array
+            Float showerLength = graphDataOrganizer.getWeekMap().get(labels.get(i)).floatValue();
+            BarEntry entry = new BarEntry(i, showerLength);
+            weekEntries.add(entry);
         }
-
-
-        for (int i = 0; i < days.length; i++) {
-            weekEntries.add(new BarEntry(i, (float) days[i]));
-        }
-
-        for (int i = 0; i < dates.length; i++) {
-            if (dates[i].length() == 0 && (dayOfMonth - 6 + i) > 0) {
-                dates[i] = monthCode + "/" + (dayOfMonth - 6 + i);
-            }
-            labels.add(dates[i]);
-        }
-
-        if (dates[0].length() > 0) {
-            textViewWeek.setText(dates[0] + " to " + dates[6] + " - Weekly Trend");
-        }
-        else {
-            textViewWeek.setText("Weekly Trend");
-        }
-
+        
         BarDataSet barDataSet = new BarDataSet(weekEntries, "Minutes Spent Showering");
         ArrayList<Integer> colors = new ArrayList<>();
         colors.add(ContextCompat.getColor(mainActivity, R.color.colorPrimaryDark));
         barDataSet.setColors(colors);
-
-
+        
         BarData data = new BarData(barDataSet);
         data.setHighlightEnabled(false);
         data.setValueTextColor(colors.get(0));
         data.setValueTextSize(0f);
         data.setBarWidth(.9f);
-
-
+        
         chartWeek.setData(data);
 
         chartWeek.getAxisRight().setEnabled(false);
         chartWeek.getAxisLeft().setAxisMinimum(0f);
         XAxis xAxis = chartWeek.getXAxis();
         xAxis.setValueFormatter(new XAxisFormatter(labels));
-        xAxis.setPosition(XAxis.XAxisPosition.TOP);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
 
         if (mainActivity.isDarkMode()) {
             xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartWeek.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartWeek.getAxisLeft().setSpaceBottom(0);
             chartWeek.getLegend().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
-            chartWeek.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.colorDarkBackground));
-            chartWeek.setGridBackgroundColor(ContextCompat.getColor(mainActivity, R.color.headerTextColor));
+
         }
 
     }
 
     public void initMonthChart() {
-
+        chartMonth.setDrawBarShadow(false);
+        chartMonth.setDrawValueAboveBar(false);
+        chartMonth.setMaxVisibleValueCount(60);
+        chartMonth.setPinchZoom(false);
+        chartMonth.setScaleEnabled(false);
+        chartMonth.setDrawGridBackground(true);
+        chartMonth.getDescription().setEnabled(false);
+        chartMonth.setBackgroundColor(Color.TRANSPARENT);
+        chartMonth.setDrawGridBackground(false);
+        chartMonth.getLegend().setEnabled(false);
+        textViewMonth.setText("Shower Length - " + DateHandler.currentMonthString + " Trend");
         chartMonth.setOnChartGestureListener(new OnChartGestureListener() {
             @Override
             public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
@@ -346,13 +365,13 @@ public class ProfileCalendarFragment extends Fragment {
 
             @Override
             public void onChartSingleTapped(MotionEvent me) {
-                isMonthChartSelected = !isMonthChartSelected;
-                if (isMonthChartSelected) {
-                    chartMonth.getData().setValueTextSize(6f);
-                } else {
-                    chartMonth.getData().setValueTextSize(0f);
-                }
-                chartMonth.setDrawValueAboveBar(isMonthChartSelected);
+//                isMonthChartSelected = !isMonthChartSelected;
+//                if (isMonthChartSelected) {
+//                    chartMonth.getData().setValueTextSize(6f);
+//                } else {
+//                    chartMonth.getData().setValueTextSize(0f);
+//                }
+//                chartMonth.setDrawValueAboveBar(isMonthChartSelected);
             }
 
             @Override
@@ -380,20 +399,12 @@ public class ProfileCalendarFragment extends Fragment {
         ArrayList<BarEntry> monthEntries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
-        for (int i = 1; i < 31; i++) {
-            try {
-                monthEntries.add(new BarEntry(30 - i, (float) mainActivity.getUserShowers().get(mainActivity.getUserShowers().size() - i).getShowerLengthMinutes()));
-                labels.add("");
-            } catch (Exception e) {
-                break;
-            }
+        for (int i = 1; i <= DateHandler.daysInMonth; i++) { //add month data from ShowerDataOrganizer to monthEntries array
+            Float showerLength = graphDataOrganizer.getMonthMap().get(DateHandler.currentMonthCode + "/" + i).floatValue();
+            labels.add(DateHandler.currentMonthCode + "/" + i);
+            BarEntry entry = new BarEntry(i, showerLength);
+            monthEntries.add(entry);
         }
-
-//        ArrayList<Double> currentMonth = months.get(Integer.parseInt(monthNum) - 1);
-//        for (double d: currentMonth){
-//            monthEntries.add(new BarEntry(Float.parseFloat(monthNum) - 1, (float) d));
-//        }
-
 
         BarDataSet barDataSet = new BarDataSet(monthEntries, "Minutes Spent Showering");
         ArrayList<Integer> colors = new ArrayList<>();
@@ -404,28 +415,36 @@ public class ProfileCalendarFragment extends Fragment {
         data.setHighlightEnabled(false);
         data.setValueTextColor(colors.get(0));
         data.setValueTextSize(0f);
-        data.setBarWidth(.4f);
-
+        data.setBarWidth(.75f);
 
         chartMonth.setData(data);
 
         chartMonth.getAxisRight().setEnabled(false);
         chartMonth.getAxisLeft().setAxisMinimum(0f);
         XAxis xAxis = chartMonth.getXAxis();
-        xAxis.setValueFormatter(new XAxisFormatterNone());
+        xAxis.setValueFormatter(new XAxisFormatter(labels));
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
 
         if (mainActivity.isDarkMode()) {
             xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartMonth.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartMonth.getAxisLeft().setSpaceBottom(0);
             chartMonth.getLegend().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
-            chartMonth.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.colorDarkBackground));
-            chartMonth.setGridBackgroundColor(ContextCompat.getColor(mainActivity, R.color.headerTextColor));
+
         }
     }
 
     public void initYearChart() {
-
+        textViewYear.setText("Avg. Shower Length - " + DateHandler.currentYear + " Trend");
+        chartYear.setDrawBarShadow(false);
+        chartYear.setDrawValueAboveBar(false);
+        chartYear.setMaxVisibleValueCount(60);
+        chartYear.setPinchZoom(false);
+        chartYear.setScaleEnabled(false);
+        chartYear.getDescription().setEnabled(false);
+        chartYear.setBackgroundColor(Color.TRANSPARENT);
+        chartYear.setDrawGridBackground(false);
+        chartYear.getLegend().setEnabled(false);
         chartYear.setOnChartGestureListener(new OnChartGestureListener() {
             @Override
             public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
@@ -446,7 +465,7 @@ public class ProfileCalendarFragment extends Fragment {
             public void onChartSingleTapped(MotionEvent me) {
                 isYearChartSelected = !isYearChartSelected;
                 if (isYearChartSelected) {
-                    chartYear.getData().setValueTextSize(6f);
+                    chartYear.getData().setValueTextSize(10f);
                 } else {
                     chartYear.getData().setValueTextSize(0f);
                 }
@@ -473,18 +492,17 @@ public class ProfileCalendarFragment extends Fragment {
 
             }
 
+
         });
 
         ArrayList<BarEntry> yearEntries = new ArrayList<>();
-        ArrayList<String> labels = new ArrayList<>();
+        ArrayList<String> labels = new ArrayList<>(DateHandler.monthNamesReadable);
 
-
-        for (int i = 1; i <= months.size(); i++) {
-            if (months.get(i - 1).size() > 0) {
-                yearEntries.add(new BarEntry(i, getAverage(months.get(i - 1)))); //add the average of each month to the graph, up to 12 months
-            }
+        for (int i = 0; i < DateHandler.monthNames.size(); i++) { //get data from year map and add to graph
+            Float showerLength = graphDataOrganizer.getYearMap().get(DateHandler.monthNames.get(i)).floatValue();
+            BarEntry entry = new BarEntry(i, showerLength);
+            yearEntries.add(entry);
         }
-
 
         BarDataSet barDataSet = new BarDataSet(yearEntries, "Average Minutes Spent Showering per Month");
         ArrayList<Integer> colors = new ArrayList<>();
@@ -503,15 +521,15 @@ public class ProfileCalendarFragment extends Fragment {
         chartYear.getAxisRight().setEnabled(false);
         chartYear.getAxisLeft().setAxisMinimum(0f);
         XAxis xAxis = chartYear.getXAxis();
-        xAxis.setValueFormatter(new XAxisFormatterNone());
+        xAxis.setLabelCount(12);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setValueFormatter(new XAxisFormatter(labels));
 
         if (mainActivity.isDarkMode()) {
             xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartYear.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartYear.getAxisLeft().setSpaceBottom(0);
             chartYear.getLegend().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
-            chartYear.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.colorDarkBackground));
-            chartYear.setGridBackgroundColor(ContextCompat.getColor(mainActivity, R.color.headerTextColor));
         }
     }
 

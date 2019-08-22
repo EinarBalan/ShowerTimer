@@ -66,10 +66,10 @@ public class HomeFragment extends Fragment {
     private double elapsedTimeMinutes = 0;
     private double instanceVolume = 0;
     private double instanceCost = 0;
-    private SimpleDateFormat sdf = new SimpleDateFormat("h:mm a");
+//    private SimpleDateFormat sdf = new SimpleDateFormat("h:mm a");
     private Calendar calendar = Calendar.getInstance();
-    private String instanceDate = DateFormat.getInstance().format(calendar.getTime()).substring(0, DateFormat.getInstance().format(calendar.getTime()).indexOf(" "));
-    private String instanceTime = "";
+    //private String instanceDate = DateFormat.getInstance().format(calendar.getTime()).substring(0, DateFormat.getInstance().format(calendar.getTime()).indexOf(" "));
+//    private String instanceTime = "";
 
     //stats access keys
     public static final String KEY_GOAL = "GOAL_TIME_MILLIS";
@@ -100,7 +100,7 @@ public class HomeFragment extends Fragment {
         progressBarGoal = v.findViewById(R.id.progressBarGoal);
         progressBarOverflow = v.findViewById(R.id.progressBarOverflow);
 
-        textViewDate = v.findViewById(R.id.textViewDate); textViewDate.setText(instanceDate);
+        textViewDate = v.findViewById(R.id.textViewDate); textViewDate.setText(DateHandler.currentDateString);
         textViewQuickVolume = v.findViewById(R.id.textViewQuickVolume);
         textViewQuickCost = v.findViewById(R.id.textViewQuickCost);
         textViewGoal = v.findViewById(R.id.textViewVibrations);
@@ -272,8 +272,8 @@ public class HomeFragment extends Fragment {
                 }
                 mainActivity.getMainNavBar().setVisibility(View.GONE);
                 Calendar calendar = Calendar.getInstance();
-                instanceDate = DateFormat.getInstance().format(calendar.getTime()).substring(0, DateFormat.getInstance().format(calendar.getTime()).indexOf(" "));
-                instanceTime = sdf.format(calendar.getTime());
+//                instanceDate = DateFormat.getInstance().format(calendar.getTime()).substring(0, DateFormat.getInstance().format(calendar.getTime()).indexOf(" "));
+//                instanceTime = sdf.format(calendar.getTime());
             }
         }
         isTimerRunning = !isTimerRunning;
@@ -300,10 +300,10 @@ public class HomeFragment extends Fragment {
 
     public void saveShower(){
         if (!mainActivity.isUserAnon()) {
-            if (elapsedTimeMillis > 15000) {
+            if (elapsedTimeMillis > MainActivity.minShowerLength) {
 
                 //add shower to user's account (getUserShower used so that showers are stored locally rather than only on database ---> fewer required accesses from client)
-                mainActivity.getUserShowers().add(new Shower(elapsedTimeMillis, instanceDate, instanceTime, elapsedTimeMillis <= mainActivity.getGoalTimeMillis()));
+                mainActivity.getUserShowers().add(new Shower(elapsedTimeMillis, elapsedTimeMillis <= mainActivity.getGoalTimeMillis()));
 
                 //save shower
                 if (mainActivity.saveToFireStore(mainActivity.getUserShowers())) { //checks network connection
@@ -391,7 +391,7 @@ public class HomeFragment extends Fragment {
             mainActivity.setFragmentReturnableSlide(new SettingsFragment());
         }
         else if (elapsedTimeMillis >= 15000){
-            mainActivity.getUserShowers().add(new Shower(elapsedTimeMillis, instanceDate, instanceTime, elapsedTimeMillis <= mainActivity.getGoalTimeMillis()));
+            mainActivity.getUserShowers().add(new Shower(elapsedTimeMillis, elapsedTimeMillis <= mainActivity.getGoalTimeMillis()));
 
             mainActivity.addTotalTimeMinutes(elapsedTimeMinutes);
             mainActivity.addTotalCost(instanceCost);

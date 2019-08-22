@@ -132,6 +132,7 @@ public class MainActivity extends AppCompatActivity {
     private int numShowersCache = 0;
     private int goalsMetCache = 0;
     private String cityCache;
+    public static final long minShowerLength = 15000;
 
 
     @Override

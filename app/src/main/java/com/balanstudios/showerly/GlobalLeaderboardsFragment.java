@@ -51,7 +51,7 @@ public class GlobalLeaderboardsFragment extends Fragment {
         leaderboardsRecycler.setVisibility(View.VISIBLE);
         leaderboardsRecycler.startAnimation(AnimationUtils.loadAnimation(mainActivity, R.anim.fade_in_button));
 
-        if (mainActivity.getDisplayName() != null && mainActivity.getDisplayName().length() > 0 && mainActivity.getUserShowers().size() >= 5 && mainActivity.getAvgShowerLengthMinutes() >= 2) {
+        if (mainActivity.getDisplayName() != null && mainActivity.getDisplayName().length() > 0 && mainActivity.getUserShowers().size() >= 2 && mainActivity.getAvgShowerLengthMinutes() >= 1.5) {
             ShowerlyUser user = new ShowerlyUser(mainActivity.getEmail(), mainActivity.getDisplayName(), mainActivity.getAvgShowerLengthMinutes());
             mainActivity.addUserGlobal(user);
             mainActivity.addUserLocal(user);

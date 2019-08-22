@@ -1,6 +1,7 @@
 package com.balanstudios.showerly;
 
 
+import android.graphics.Color;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.core.content.ContextCompat;
@@ -93,7 +94,7 @@ public class ProfileStatsFragment extends Fragment {
         pieChartGoal = v.findViewById(R.id.pieChartGoal);
         initPieChart();
         chartLastShower = v.findViewById(R.id.chartLastShower);
-        initLastShowerChart();
+//        initLastShowerChart();
         
 
         updateLastShower();
@@ -275,6 +276,8 @@ public class ProfileStatsFragment extends Fragment {
         chartLastShower.setScaleEnabled(false);
         chartLastShower.setDrawGridBackground(true);
         chartLastShower.getDescription().setEnabled(false);
+        chartLastShower.setDrawGridBackground(false);
+        chartLastShower.setBackgroundColor(Color.TRANSPARENT);
         
         ArrayList<BarEntry> barEntries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
@@ -308,14 +311,13 @@ public class ProfileStatsFragment extends Fragment {
         XAxis xAxis = chartLastShower.getXAxis();
         xAxis.setValueFormatter(new XAxisFormatterNone());
         xAxis.setCenterAxisLabels(true);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
 
 
         if (mainActivity.isDarkMode()){
             xAxis.setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartLastShower.getAxisLeft().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
             chartLastShower.getLegend().setTextColor(ContextCompat.getColor(mainActivity, R.color.colorDarkText));
-            chartLastShower.setBackgroundColor(ContextCompat.getColor(mainActivity, R.color.colorDarkBackground));
-            chartLastShower.setGridBackgroundColor(ContextCompat.getColor(mainActivity, R.color.headerTextColor));
         }
     }
     
