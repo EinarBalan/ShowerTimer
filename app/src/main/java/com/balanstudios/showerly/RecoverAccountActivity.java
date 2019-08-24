@@ -3,6 +3,7 @@ package com.balanstudios.showerly;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -10,8 +11,12 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -20,6 +25,7 @@ public class RecoverAccountActivity extends AppCompatActivity {
 
     private Button buttonDone2;
     private EditText editTextEmail2;
+    private ImageView imageViewBackground;
 
     private FirebaseAuth firebaseAuth;
 
@@ -42,6 +48,14 @@ public class RecoverAccountActivity extends AppCompatActivity {
 
         buttonDone2 = findViewById(R.id.buttonDone2);
         editTextEmail2 = findViewById(R.id.editTextEmail2);
+        imageViewBackground = findViewById(R.id.imageViewBackground);
+
+        Drawable background = getResources().getDrawable(R.drawable.slide3_bg);
+        Glide.with(this)
+                .load(background)
+                .apply(new RequestOptions().centerCrop())
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(imageViewBackground);
 
         firebaseAuth = FirebaseAuth.getInstance();
 

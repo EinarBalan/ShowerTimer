@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -12,10 +13,14 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -33,6 +38,7 @@ public class LogInActivity extends AppCompatActivity {
     private EditText editTextPassword;
     private ProgressBar progressBarLogIn;
     private TextView textViewGetHelp;
+    private ImageView imageViewBackground;
 
     private FirebaseAuth firebaseAuth;
     private String email;
@@ -56,11 +62,21 @@ public class LogInActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_log_in);
 
+        imageViewBackground = findViewById(R.id.imageViewBackground);
+
+        Drawable background = getResources().getDrawable(R.drawable.slide2_bg);
+        Glide.with(this)
+                .load(background)
+                .apply(new RequestOptions().centerCrop())
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(imageViewBackground);
+
         buttonDone = findViewById(R.id.buttonDone); buttonDone.setOnClickListener(onClickListener);
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
         progressBarLogIn = findViewById(R.id.progressBarLogIn);
         textViewGetHelp = findViewById(R.id.textViewPasswordHelp); textViewGetHelp.setOnClickListener(onClickListener);
+
 
         firebaseAuth = FirebaseAuth.getInstance();
     }

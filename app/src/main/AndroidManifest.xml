@@ -11,6 +11,8 @@
         android:supportsRtl="true"
         android:theme="@style/ShowerTimerLight"
         tools:ignore="GoogleAppIndexingWarning">
+
+
         <activity android:name=".IntroActivity"
             android:theme="@style/SplashTheme" />
         <activity
