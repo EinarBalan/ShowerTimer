@@ -114,9 +114,9 @@ public class SplashActivity extends AppCompatActivity {
 
             //don't show intro after first run
             SharedPreferences.Editor editor = sharedPreferences.edit();
-//            isFirstRun = false;
-//            editor.putBoolean(FIRST_RUN, isFirstRun);
-//            editor.apply();
+            isFirstRun = false;
+            editor.putBoolean(FIRST_RUN, isFirstRun);
+            editor.apply();
         }
 
     }

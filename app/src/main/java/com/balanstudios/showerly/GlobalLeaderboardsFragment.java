@@ -59,7 +59,7 @@ public class GlobalLeaderboardsFragment extends Fragment {
             mainActivity.saveSettings();
             mainActivity.saveSettingsToFirestore();
 
-            mainActivity.sortLowToHigh(mainActivity.getTop25Users());
+            mainActivity.sortLowToHigh(mainActivity.getTop25Users()); //make sure the leaderboards are in the right order
 
             mainActivity.saveLeaderboards();
 

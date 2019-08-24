@@ -323,7 +323,7 @@ public class HomeFragment extends Fragment {
 
                     ShowerlyUser currentUser = new ShowerlyUser(mainActivity.getEmail(), mainActivity.getDisplayName(), mainActivity.getAvgShowerLengthMinutes());
 
-                    if (mainActivity.getUserShowers().size() >= 5 && mainActivity.getAvgShowerLengthMinutes() >= 2) {
+                    if (mainActivity.getUserShowers().size() >= 2 && mainActivity.getAvgShowerLengthMinutes() >= 1.5) {
                         for (int i = 0; i < mainActivity.getTop25Users().size(); i++){ //update leaderboards with new avg time
                             if (currentUser.equals(mainActivity.getTop25Users().get(i))){
                                 mainActivity.getTop25Users().set(i, currentUser);

@@ -16,5 +16,8 @@
     <color name="colorLightText">#c9c9c9</color>
     <color name="colorDarkText">@android:color/white</color>
     <color name="colorDarkBackground">#101010</color>
+    <color name="colorGradient1">#D3FA7B</color>
+    <color name="colorGradient2">#58F3EE</color>
+
 
 </resources>

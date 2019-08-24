@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".IntroSlideTwoFragment"
-    android:background="@color/colorPrimary"
-    android:fitsSystemWindows="true">
+    android:background="@drawable/backgroundgradient"
+    android:fitsSystemWindows="true"
+    tools:context=".IntroSlideTwoFragment">
 
     <ImageView
         android:id="@+id/imageViewBackground"
@@ -32,8 +32,7 @@
             <ImageView
                 android:id="@+id/imageViewShowcase"
                 android:layout_width="match_parent"
-                android:layout_height="460dp"
-                />
+                android:layout_height="460dp" />
 
             <TextView
                 android:id="@+id/textView6"
