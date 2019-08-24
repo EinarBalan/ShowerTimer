@@ -264,8 +264,11 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
-        firebaseAuth.signOut();
-        editor.clear().apply();
+        editor.clear();
+        editor.putBoolean(SplashActivity.FIRST_RUN, false); //don't show intro again
+        editor.apply();
+
+        editor.putBoolean(SplashActivity.FIRST_RUN, false); //don't show intro again
 
         Intent restart = new Intent(MainActivity.this, SplashActivity.class);
         restart.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -280,7 +283,9 @@ public class MainActivity extends AppCompatActivity {
                 SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
 
-                editor.clear().apply();
+                editor.clear();
+                editor.putBoolean(SplashActivity.FIRST_RUN, false); //don't show intro again
+                editor.apply();
 
                 Intent restart = new Intent(MainActivity.this, SplashActivity.class);
                 startActivity(restart);
@@ -888,8 +893,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 int j = 0;
+                ShowerlyUser compUser = new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes());
                 while (j < top25Users.size()) {
-                    if (top25Users.get(j).equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes()))) {
+                    if (top25Users.get(j).equals(compUser)) {
                         top25Users.remove(j);
                         j++;
                         if (j > 0 ) {
@@ -901,7 +907,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 while (j < localTop25Users.size()) {
-                    if (localTop25Users.get(j).equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes()))) {
+                    if (localTop25Users.get(j).equals(compUser)) {
                         localTop25Users.remove(j);
                         j++;
                         if (j > 0 ) {
@@ -912,20 +918,7 @@ public class MainActivity extends AppCompatActivity {
                         j++;
                     }
                 }
-//                for (int j = 0; j < top25Users.size(); j++){
-//                    if (top25Users.get(i).equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes() ))){
-//                        top25Users.remove(i);
-//                        if (j > 0 ) {
-//                            j--;
-//                        }
-//                    }
-//                }
-//                for (int j = 0; j < localTop25Users.size(); j++){
-//                    if (localTop25Users.get(j).equals(new ShowerlyUser(getEmail(), getDisplayName(), getAvgShowerLengthMinutes() ))){
-//                        localTop25Users.remove(j);
-//                        j--;
-//                    }
-//                }
+
                 saveLeaderboards();
                 db.collection("Users").document(email).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
@@ -1172,7 +1165,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public boolean addUserGlobal(ShowerlyUser user) { //awful terrible ugly
-        for (ShowerlyUser u : top25Users) { //don't read users if they're already there
+        for (ShowerlyUser u : top25Users) { //don't add users if they're already there
             if (u.equals(user)) {
                 return false;
             }

@@ -39,10 +39,15 @@
     </style>
 
     <style name="SplashTheme" parent="ShowerTimerLight">
-        <item name="android:windowBackground">@color/colorPrimary</item>
+        <item name="android:windowBackground">@drawable/slide1_bg</item>
         <item name="android:navigationBarColor">@color/colorBlack</item>
-        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:colorEdgeEffect">@color/lightGrey</item>
+        <item name="colorAccent">#403c3b</item>
+
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:fitsSystemWindows">false</item>
     </style>
 
     <style name="Divider" >

@@ -3,25 +3,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.balanstudios.showerly">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-
-
-
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/showerly_app_icon_final_v1"
+        android:icon="@mipmap/showerly_icon"
         android:label="Showerly"
-        android:roundIcon="@mipmap/showerly_app_icon_final_v1_round"
+        android:roundIcon="@mipmap/showerly_icon_round"
         android:supportsRtl="true"
         android:theme="@style/ShowerTimerLight"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".RecoverAccountActivity"
+        <activity android:name=".IntroActivity"
+            android:theme="@style/SplashTheme" />
+        <activity
+            android:name=".RecoverAccountActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/SplashTheme"/>
+            android:theme="@style/SplashTheme" />
         <activity
             android:name=".SignUpActivity"
             android:screenOrientation="portrait"
@@ -44,5 +39,11 @@
             android:name=".MainActivity"
             android:screenOrientation="portrait" />
     </application>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>

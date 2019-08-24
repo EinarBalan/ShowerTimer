@@ -32,7 +32,6 @@ class ShowerDataOrganizer {
 
         for (Shower s: userShowers) {
             if (s.getDateHandler().isInDay()) {
-                Log.d("D", "" + s.getDateHandler().getTimeHour());
                 showerLengthsPerDay[s.getDateHandler().getTimeHour()] += s.getShowerLengthMinutes(); //add to total shower length at the days index in the array if in current week
             }
         }

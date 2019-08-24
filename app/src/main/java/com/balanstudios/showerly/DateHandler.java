@@ -7,14 +7,14 @@ import java.util.Date;
 
 import javax.annotation.Nonnull;
 
- class DateHandler {
+class DateHandler {
 
     private Calendar cal;
     private Date date;
     private static SimpleDateFormat dateFormatDayOfWeek = new SimpleDateFormat("EEE");
     private static SimpleDateFormat dateFormatMonthShort = new SimpleDateFormat("MMM");
-     private static SimpleDateFormat dateFormatMonth = new SimpleDateFormat("MMMM");
-     private static SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yy");
+    private static SimpleDateFormat dateFormatMonth = new SimpleDateFormat("MMMM");
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yy");
     private static SimpleDateFormat dateFormatCondensed = new SimpleDateFormat("M/d");
     private static SimpleDateFormat dateTimeFormat = new SimpleDateFormat("h:mm a");
     private static SimpleDateFormat dateFormatYear = new SimpleDateFormat("yyyy");
@@ -28,7 +28,7 @@ import javax.annotation.Nonnull;
 
     static String currentMonthString = dateFormatMonth.format(Calendar.getInstance().getTime());
 
-     static String currentYearString = dateFormatYear.format(Calendar.getInstance().getTime());
+    static String currentYearString = dateFormatYear.format(Calendar.getInstance().getTime());
 
     static String currentDayOfWeek = dateFormatDayOfWeek.format(Calendar.getInstance().getTime());
 
@@ -48,10 +48,10 @@ import javax.annotation.Nonnull;
 
     static ArrayList<String> monthNames = new ArrayList<>(Arrays.asList("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"));
 
-     static ArrayList<String> monthNamesReadable = new ArrayList<>(Arrays.asList("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"));
+    static ArrayList<String> monthNamesReadable = new ArrayList<>(Arrays.asList("J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"));
 
 
-     //instance date information
+    //instance date information
     private int dayOfMonth;
 
     private int dayOfWeekCode;
@@ -65,7 +65,7 @@ import javax.annotation.Nonnull;
     private String monthString;
 
     private int year;
-    
+
     private int weekCode;
 
     private String dateString;
@@ -76,9 +76,9 @@ import javax.annotation.Nonnull;
 
 
     //date bounds information
-     static int daysInMonth = Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH);
-     static int daysInYear = Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_YEAR);
-    
+    static int daysInMonth = Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH);
+    static int daysInYear = Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_YEAR);
+
     DateHandler() {
         cal = Calendar.getInstance();
         date = cal.getTime();
@@ -114,7 +114,7 @@ import javax.annotation.Nonnull;
     boolean isInMonth() {
         return (monthCode == currentMonthCode && isInYear());
     }
-    
+
     boolean isInMonth(DateHandler monthDateHandler) {
         return (monthCode == monthDateHandler.monthCode && isInYear(monthDateHandler));
     }
@@ -122,7 +122,7 @@ import javax.annotation.Nonnull;
     boolean isInYear() {
         return year == currentYear;
     }
-    
+
     boolean isInYear(DateHandler yearDateHandler) {
         return year == yearDateHandler.year;
     }
@@ -134,7 +134,7 @@ import javax.annotation.Nonnull;
 
 
     //getters and setters
-     Date getDate() {
+    Date getDate() {
         return date;
     }
 
@@ -146,43 +146,43 @@ import javax.annotation.Nonnull;
         return dayOfWeekCode;
     }
 
-     String getDayOfWeekString() {
+    String getDayOfWeekString() {
         return dayOfWeekString;
     }
 
-     int getMonthCode() {
+    int getMonthCode() {
         return monthCode;
     }
 
-     String getMonthString() {
+    String getMonthString() {
         return monthString;
     }
 
-     int getYear() {
+    int getYear() {
         return year;
     }
 
-     int getWeekCode() {
+    int getWeekCode() {
         return weekCode;
     }
 
-     int getDaysInMonth() {
+    int getDaysInMonth() {
         return daysInMonth;
     }
 
-     int getDaysInYear() {
+    int getDaysInYear() {
         return daysInYear;
     }
 
-     String getDateString() {
+    String getDateString() {
         return dateString;
     }
 
-     String getTimeString() {
+    String getTimeString() {
         return timeString;
     }
 
-     int getTimeHour() {
+    int getTimeHour() {
         return timeHour;
     }
 }

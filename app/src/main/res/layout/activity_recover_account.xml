@@ -4,8 +4,18 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RecoverAccountActivity"
-    android:background="@color/colorPrimary">
+    tools:context=".RecoverAccountActivity">
+
+    <ImageView
+        android:id="@+id/imageView7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/slide3_bg" />
 
     <Button
         android:id="@+id/buttonDone2"
@@ -30,7 +40,11 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
-        android:fontFamily="sans-serif-light"
+        android:fontFamily="@font/segoeuisl"
+        android:shadowColor="#481E201E"
+        android:shadowDx="5"
+        android:shadowDy="5"
+        android:shadowRadius="5"
         android:text="Recover Account"
         android:textColor="@android:color/background_light"
         android:textSize="40sp"

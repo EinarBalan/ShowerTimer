@@ -5,12 +5,15 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Handler;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -30,10 +33,12 @@ public class SplashActivity extends AppCompatActivity {
     public static final String SHARED_PREFS = "sharedPrefs";
     public static final String EMAIL = "email";
     public static final String PASSWORD = "password";
+    public static final String FIRST_RUN = "first run";
 
     public FirebaseAuth firebaseAuth;
     public String email = "";
     public String password = "";
+    private boolean isFirstRun = true;
 
     long backPressedTime = 0;
     private LinearLayout buttonLayout;
@@ -45,9 +50,19 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Window window = getWindow();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(0x00000000);  // transparent
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            int flags = WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
+            window.addFlags(flags);
+        }
+        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+
         setContentView(R.layout.activity_splash);
-        getWindow().setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
-        getWindow().setNavigationBarColor(getResources().getColor(R.color.colorBlack));
 
         buttonLayout = findViewById(R.id.buttonLayout);
         buttonLogIn = findViewById(R.id.buttonLogIn); buttonLogIn.setOnClickListener(onClickListener);
@@ -59,13 +74,8 @@ public class SplashActivity extends AppCompatActivity {
         firebaseAuth = FirebaseAuth.getInstance();
         email = sharedPreferences.getString(EMAIL, "");
         password = sharedPreferences.getString(PASSWORD, "");
+        isFirstRun = sharedPreferences.getBoolean(FIRST_RUN, true);
 
-//        if (!isNetworkConnected()){
-//            Toast.makeText(this, "No network connection. Signing in as guest.", Toast.LENGTH_SHORT).show();
-//            Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
-//            startActivity(mainIntent);
-//            finish();
-//        }
 
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -81,7 +91,18 @@ public class SplashActivity extends AppCompatActivity {
             }
         }, 500);
 
+        //start intro activity on first run
+        if (isFirstRun) {
+            Intent introActivity = new Intent(this, IntroActivity.class);
+            startActivity(introActivity);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
 
+            //don't show intro after first run
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            isFirstRun = false;
+            editor.putBoolean(FIRST_RUN, isFirstRun);
+            editor.apply();
+        }
 
     }
 
@@ -147,7 +168,7 @@ public class SplashActivity extends AppCompatActivity {
     public void proceedAsGuest(){
         final AlertDialog alertDialog = new AlertDialog.Builder(this)
                 .setTitle("Are you sure?")
-                .setMessage("Guest users do not have access to many features such as shower history, usage graphs, and the community leaderboards.\n\nAre you sure you want to continue without making an account?")
+                .setMessage("Guest users do not have access to many features such as shower history, usage graphs, and the community leaderboards.\n\nWe highly recommend that you sign up with your email to experience all that the app has to offer. \n\nAre you sure you want to continue without making an account?")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
